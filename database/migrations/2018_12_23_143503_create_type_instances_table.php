@@ -18,6 +18,7 @@ class CreateTypeInstancesTable extends Migration
             $table->string('name');
             $table->text('description');
             $table->text('options')->nullable();
+            $table->integer('type_id')->unsigned();
             $table->timestamps();
         });
     }

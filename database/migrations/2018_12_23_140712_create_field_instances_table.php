@@ -15,11 +15,12 @@ class CreateFieldInstancesTable extends Migration
     {
         Schema::create('field_instances', function (Blueprint $table) {
             $table->increments('id');
-            $table->('name');
+            $table->string('name');
             $table->string('group')->nullable();
             $table->text('description')->nullable();
             $table->text('options')->nullable();
             $table->integer('field_id')->unsigned();
+            $table->integer('weight')->default(0);
             $table->timestamps();
         });
     }
