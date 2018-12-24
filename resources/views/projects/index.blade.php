@@ -31,11 +31,21 @@
         </label>
         <input class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline" type="text" placeholder="Cool new project" name="name">
       </div>
-      <div class="mb-6">
+      <div class="mb-4">
         <label class="block text-grey-darker text-sm font-bold mb-2" for="password">
           Description
         </label>
-        <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker mb-3 leading-tight focus:outline-none focus:shadow-outline" placeholder="This project will be well planned and go without a hitch..." rows="4" name="description"></textarea>
+        <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline mb-0" placeholder="This project will be well planned and go without a hitch..." rows="4" name="description"></textarea>
+      </div>
+      <div class="mb-6">
+        <label class="block text-grey-darker text-sm font-bold mb-2" for="password">
+          Project CMS
+        </label>
+        <select name="cms_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker mb-3 leading-tight focus:outline-none focus:shadow-outline">
+          @foreach($cms as $system)
+            <option value="{{ $system->id }}">{{ $system->name }}</option>
+          @endforeach
+        </select>
       </div>
       <div class="flex items-center justify-between">
         <button class="bg-blue hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">

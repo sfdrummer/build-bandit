@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Cms;
 use App\Project;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,9 @@ class ProjectsController extends Controller
     {
         $projects = Project::all();
 
-        return view('projects.index', compact('projects'));
+        $cms = Cms::all();
+
+        return view('projects.index', compact('projects', 'cms'));
     }
 
     /**
@@ -33,7 +36,8 @@ class ProjectsController extends Controller
 
         $project = Project::create([
             'name' => $request->name,
-            'description' => $request->description
+            'description' => $request->description,
+            'cms_id' => $request->cms_id
         ]);
 
         return redirect("/projects/{$project->id}");
@@ -47,7 +51,10 @@ class ProjectsController extends Controller
      */
     public function show(Project $project)
     {
-        //
+        $fields = $project->getFieldsForCms();
+        $types = $project->getTypesForCms();
+
+        return view('projects.show', compact('project', 'types', 'fields'));
     }
 
     /**

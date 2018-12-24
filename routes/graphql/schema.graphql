@@ -1,0 +1,123 @@
+"A datetime string with format 'Y-m-d H:i:s', e.g. '2018-01-01 13:00:00'."
+scalar DateTime
+    @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"A date string with format 'Y-m-d', e.g. '2011-05-23'."
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+
+type Query {
+    users: [User!]! @paginate(type: "paginator", model: "App\\User")
+    user(id: ID @eq): User @find(model: "App\\User")
+    types: [Type!]! @all
+    typeById(id: Int! @eq): Type @find
+    systems: [Cms!]! @all
+    systemById(id: Int! @eq): Cms @find
+    projects: [Project!]! @all
+    projectById(id: Int! @eq): Project @find
+    fieldTypes: [FieldType!] @all
+    fieldTypeById(id: Int! @eq): FieldType @find
+    modules: [Module!] @all
+    moduleById(id: Int! @eq): Module @find
+}
+
+type Mutation {
+    createUser(
+        name: String @rules(apply: ["required"])
+        email: String @rules(apply: ["required", "email", "unique:users,email"])
+    ): User @create(model: "App\\User")
+
+    updateUser(
+        id: ID @rules(apply: ["required"])
+        name: String
+        email: String @rules(apply: ["email"])
+    ): User @update(model: "App\\User")
+
+    deleteUser(id: ID @rules(apply: ["required"])): User
+        @delete(model: "App\\User")
+
+    createType(
+        name: String @rules(apply: ["required", "unique:types"])
+        cms_id: Int @rules(apply: ["required"])
+    ): Type! @create
+
+    deleteType(id: ID! @rules(apply: ["required"])): Type
+        @delete(model: "App\\Type")
+
+    createCms(
+        name: String @rules(apply: ["required", "unique:cms"])
+        description: String
+    ): Cms! @create
+
+    deleteSystem(id: ID! @rules(apply: ["required"])): Cms
+        @delete(model: "App\\Cms")
+
+    createProject(
+        name: String @rules(apply: ["required", "unique:projects"])
+        description: String
+        cms_id: ID!
+    ): Project! @create
+
+    deleteProject(id: ID! @rules(apply: ["required"])): Project
+        @delete(model: "App\\Project")
+
+    createFieldType(
+        name: String @rules(apply: ["required", "unique:field_types"])
+        description: String
+        group: String
+        module_id: ID
+        cms_id: ID!
+    ): FieldType! @create
+
+    deleteFieldType(id: ID! @rules(apply: ["required"])): FieldType
+        @delete(model: "App\\FieldType")
+
+    createModule(
+        name: String @rules(apply: ["required", "unique:modules"])
+        cms_id: ID!
+    ): Module! @create
+
+    deleteModule(id: ID! @rules(apply: ["required"])): Module
+        @delete(model: "App\\Module")
+}
+
+type User {
+    id: ID!
+    name: String!
+    email: String!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type Type {
+    id: ID!
+    name: String!
+}
+
+type Cms {
+    id: ID!
+    name: String!
+    description: String
+    projects: [Project] @hasMany
+}
+
+type Project {
+    id: ID!
+    name: String!
+    description: String
+    cms_id: Int!
+}
+
+type FieldType {
+    id: ID!
+    name: String!
+    description: String
+    group: String
+    module_id: Int
+    cms_id: Int!
+}
+
+type Module {
+    id: ID!
+    name: String!
+    cms_id: ID!
+}

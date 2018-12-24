@@ -21,7 +21,7 @@
   <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 </head>
 <body class="border-t-8 border-grey-dark bg-grey-lighter" style="font-family: 'Fira sans';">
-  <header class="text-grey-darker bg-grey-lightest mb-16 px-8">
+  <header class="text-grey-darker bg-grey-lightest px-8">
     <div class="container mx-auto py-8 flex items-center justify-between">
       <h1 class="font-light tracking-wide">
         <i class="fas fa-hammer"></i> BuildBandit
@@ -40,7 +40,9 @@
     </div>
   </header>
 
-  <main class="py-4 px-8">
+  @yield('postHeader')
+
+  <main class="py-4 px-8 mt-16">
     @yield('content')
   </main>
 </div>
