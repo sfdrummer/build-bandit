@@ -21,24 +21,7 @@
   <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 </head>
 <body class="border-t-8 border-grey-dark bg-grey-lighter" style="font-family: 'Fira sans';">
-  <header class="text-grey-darker bg-grey-lightest px-8">
-    <div class="container mx-auto py-8 flex items-center justify-between">
-      <h1 class="font-light tracking-wide">
-        <i class="fas fa-hammer"></i> BuildBandit
-      </h1>
-      <ul class="flex items-center list-reset">
-        <li class="mr-12">
-          <a href="/projects" class="text-grey-darkest no-underline">All Projects</a>
-        </li>
-        <li class="mr-12">
-          <a href="/types" class="text-grey-darkest no-underline">Types</a>
-        </li>
-        <li class="mr-12">
-          <a href="/fields" class="text-grey-darkest no-underline">Fields</a>
-        </li>
-      </ul>
-    </div>
-  </header>
+  <div id="app"></div>
 
   @yield('postHeader')
 

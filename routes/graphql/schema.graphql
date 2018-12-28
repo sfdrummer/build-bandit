@@ -98,13 +98,15 @@ type Cms {
     name: String!
     description: String
     projects: [Project] @hasMany
+    fields: [FieldType] @hasMany
+    types: [Type] @hasMany
 }
 
 type Project {
     id: ID!
     name: String!
     description: String
-    cms_id: Int!
+    cms: Cms! @belongsTo
 }
 
 type FieldType {

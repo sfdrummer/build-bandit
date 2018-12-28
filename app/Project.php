@@ -14,14 +14,4 @@ class Project extends Model
     {
         return $this->belongsTo(Cms::class);
     }
-
-    public function getFieldsForCms()
-    {
-        return FieldType::where('cms_id', $this->cms->id)->get();
-    }
-
-    public function getTypesForCms()
-    {
-        return Type::where('cms_id', $this->cms->id)->get();
-    }
 }

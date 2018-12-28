@@ -51,8 +51,8 @@ class ProjectsController extends Controller
      */
     public function show(Project $project)
     {
-        $fields = $project->getFieldsForCms();
-        $types = $project->getTypesForCms();
+        $fields = $project->cms->fields;
+        $types = $project->cms->types;
 
         return view('projects.show', compact('project', 'types', 'fields'));
     }

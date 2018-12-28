@@ -12,9 +12,7 @@
 */
 
 Route::get('/', function () {
-    return redirect('/projects');
+    return view('home');
 });
 
 Auth::routes();
-
-Route::resource('projects', 'ProjectsController');
