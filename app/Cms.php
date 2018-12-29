@@ -3,6 +3,7 @@
 namespace App;
 
 use App\FieldType;
+use App\Module;
 use App\Project;
 use App\Type;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ class Cms extends Model
         return $this->hasMany(Project::class);
     }
 
-    public function fields()
+    public function fieldTypes()
     {
         return $this->hasMany(FieldType::class);
     }
@@ -24,5 +25,10 @@ class Cms extends Model
     public function types()
     {
         return $this->hasMany(Type::class);
+    }
+
+    public function modules()
+    {
+        return $this->hasMany(Module::class);
     }
 }

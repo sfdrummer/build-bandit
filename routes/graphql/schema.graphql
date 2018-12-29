@@ -9,15 +9,20 @@ type Query {
     users: [User!]! @paginate(type: "paginator", model: "App\\User")
     user(id: ID @eq): User @find(model: "App\\User")
     types: [Type!]! @all
-    typeById(id: Int! @eq): Type @find
+    typeById(id: ID! @eq): Type @find
+    typesByCms(cms_id: ID! @eq): [Type!]! @all(model: "App\\Type")
     systems: [Cms!]! @all
-    systemById(id: Int! @eq): Cms @find
+    systemById(id: ID! @eq): Cms @find
     projects: [Project!]! @all
-    projectById(id: Int! @eq): Project @find
+    projectById(id: ID! @eq): Project @find
     fieldTypes: [FieldType!] @all
-    fieldTypeById(id: Int! @eq): FieldType @find
+    fieldTypeById(id: ID! @eq): FieldType @find
     modules: [Module!] @all
-    moduleById(id: Int! @eq): Module @find
+    moduleById(id: ID! @eq): Module @find
+    typeInstancesForProjectType(
+        type_id: ID! @eq
+        project_id: ID! @eq
+    ): [TypeInstance!]! @all(model: "App\\TypeInstance")
 }
 
 type Mutation {
@@ -37,7 +42,7 @@ type Mutation {
 
     createType(
         name: String @rules(apply: ["required", "unique:types"])
-        cms_id: Int @rules(apply: ["required"])
+        cms_id: ID @rules(apply: ["required"])
     ): Type! @create
 
     deleteType(id: ID! @rules(apply: ["required"])): Type
@@ -61,12 +66,19 @@ type Mutation {
         @delete(model: "App\\Project")
 
     createFieldType(
-        name: String @rules(apply: ["required", "unique:field_types"])
+        name: String @rules(apply: ["required"])
         description: String
         group: String
         module_id: ID
         cms_id: ID!
     ): FieldType! @create
+
+    updateFieldType(
+        id: ID @rules(apply: ["required"])
+        name: String
+        group: String
+        module_id: ID
+    ): FieldType @update(model: "App\\FieldType")
 
     deleteFieldType(id: ID! @rules(apply: ["required"])): FieldType
         @delete(model: "App\\FieldType")
@@ -78,6 +90,15 @@ type Mutation {
 
     deleteModule(id: ID! @rules(apply: ["required"])): Module
         @delete(model: "App\\Module")
+
+    createTypeInstance(
+        name: String @rules(apply: ["required"])
+        machine_name: String
+        description: String
+        options: String
+        type_id: ID! @rules(apply: ["required"])
+        project_id: ID! @rules(apply: ["required"])
+    ): TypeInstance! @create
 }
 
 type User {
@@ -91,6 +112,18 @@ type User {
 type Type {
     id: ID!
     name: String!
+    cms_id: Cms! @belongsTo
+    module_id: ID!
+}
+
+type TypeInstance {
+    id: ID!
+    name: String!
+    machine_name: String!
+    description: String
+    options: String
+    type_id: ID!
+    project_id: ID!
 }
 
 type Cms {
@@ -98,8 +131,9 @@ type Cms {
     name: String!
     description: String
     projects: [Project] @hasMany
-    fields: [FieldType] @hasMany
+    fieldTypes: [FieldType] @hasMany
     types: [Type] @hasMany
+    modules: [Module] @hasMany
 }
 
 type Project {

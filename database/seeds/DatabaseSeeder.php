@@ -13,5 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(CmsTableSeeder::class);
         $this->call(TypesTableSeeder::class);
+        $this->call(FieldTypesSeeder::class);
+        $this->call(ModulesSeeder::class);
     }
 }

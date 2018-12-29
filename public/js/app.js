@@ -63354,6 +63354,499 @@ exports.get = function () {
 
 /***/ }),
 
+/***/ "./node_modules/pluralize/pluralize.js":
+/*!*********************************************!*\
+  !*** ./node_modules/pluralize/pluralize.js ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* global define */
+
+(function (root, pluralize) {
+  /* istanbul ignore else */
+  if (true) {
+    // Node.
+    module.exports = pluralize();
+  } else {}
+})(this, function () {
+  // Rule storage - pluralize and singularize need to be run sequentially,
+  // while other rules can be optimized using an object for instant lookups.
+  var pluralRules = [];
+  var singularRules = [];
+  var uncountables = {};
+  var irregularPlurals = {};
+  var irregularSingles = {};
+
+  /**
+   * Sanitize a pluralization rule to a usable regular expression.
+   *
+   * @param  {(RegExp|string)} rule
+   * @return {RegExp}
+   */
+  function sanitizeRule (rule) {
+    if (typeof rule === 'string') {
+      return new RegExp('^' + rule + '$', 'i');
+    }
+
+    return rule;
+  }
+
+  /**
+   * Pass in a word token to produce a function that can replicate the case on
+   * another word.
+   *
+   * @param  {string}   word
+   * @param  {string}   token
+   * @return {Function}
+   */
+  function restoreCase (word, token) {
+    // Tokens are an exact match.
+    if (word === token) return token;
+
+    // Upper cased words. E.g. "HELLO".
+    if (word === word.toUpperCase()) return token.toUpperCase();
+
+    // Title cased words. E.g. "Title".
+    if (word[0] === word[0].toUpperCase()) {
+      return token.charAt(0).toUpperCase() + token.substr(1).toLowerCase();
+    }
+
+    // Lower cased words. E.g. "test".
+    return token.toLowerCase();
+  }
+
+  /**
+   * Interpolate a regexp string.
+   *
+   * @param  {string} str
+   * @param  {Array}  args
+   * @return {string}
+   */
+  function interpolate (str, args) {
+    return str.replace(/\$(\d{1,2})/g, function (match, index) {
+      return args[index] || '';
+    });
+  }
+
+  /**
+   * Replace a word using a rule.
+   *
+   * @param  {string} word
+   * @param  {Array}  rule
+   * @return {string}
+   */
+  function replace (word, rule) {
+    return word.replace(rule[0], function (match, index) {
+      var result = interpolate(rule[1], arguments);
+
+      if (match === '') {
+        return restoreCase(word[index - 1], result);
+      }
+
+      return restoreCase(match, result);
+    });
+  }
+
+  /**
+   * Sanitize a word by passing in the word and sanitization rules.
+   *
+   * @param  {string}   token
+   * @param  {string}   word
+   * @param  {Array}    rules
+   * @return {string}
+   */
+  function sanitizeWord (token, word, rules) {
+    // Empty string or doesn't need fixing.
+    if (!token.length || uncountables.hasOwnProperty(token)) {
+      return word;
+    }
+
+    var len = rules.length;
+
+    // Iterate over the sanitization rules and use the first one to match.
+    while (len--) {
+      var rule = rules[len];
+
+      if (rule[0].test(word)) return replace(word, rule);
+    }
+
+    return word;
+  }
+
+  /**
+   * Replace a word with the updated word.
+   *
+   * @param  {Object}   replaceMap
+   * @param  {Object}   keepMap
+   * @param  {Array}    rules
+   * @return {Function}
+   */
+  function replaceWord (replaceMap, keepMap, rules) {
+    return function (word) {
+      // Get the correct token and case restoration functions.
+      var token = word.toLowerCase();
+
+      // Check against the keep object map.
+      if (keepMap.hasOwnProperty(token)) {
+        return restoreCase(word, token);
+      }
+
+      // Check against the replacement map for a direct word replacement.
+      if (replaceMap.hasOwnProperty(token)) {
+        return restoreCase(word, replaceMap[token]);
+      }
+
+      // Run all the rules against the word.
+      return sanitizeWord(token, word, rules);
+    };
+  }
+
+  /**
+   * Check if a word is part of the map.
+   */
+  function checkWord (replaceMap, keepMap, rules, bool) {
+    return function (word) {
+      var token = word.toLowerCase();
+
+      if (keepMap.hasOwnProperty(token)) return true;
+      if (replaceMap.hasOwnProperty(token)) return false;
+
+      return sanitizeWord(token, token, rules) === token;
+    };
+  }
+
+  /**
+   * Pluralize or singularize a word based on the passed in count.
+   *
+   * @param  {string}  word
+   * @param  {number}  count
+   * @param  {boolean} inclusive
+   * @return {string}
+   */
+  function pluralize (word, count, inclusive) {
+    var pluralized = count === 1
+      ? pluralize.singular(word) : pluralize.plural(word);
+
+    return (inclusive ? count + ' ' : '') + pluralized;
+  }
+
+  /**
+   * Pluralize a word.
+   *
+   * @type {Function}
+   */
+  pluralize.plural = replaceWord(
+    irregularSingles, irregularPlurals, pluralRules
+  );
+
+  /**
+   * Check if a word is plural.
+   *
+   * @type {Function}
+   */
+  pluralize.isPlural = checkWord(
+    irregularSingles, irregularPlurals, pluralRules
+  );
+
+  /**
+   * Singularize a word.
+   *
+   * @type {Function}
+   */
+  pluralize.singular = replaceWord(
+    irregularPlurals, irregularSingles, singularRules
+  );
+
+  /**
+   * Check if a word is singular.
+   *
+   * @type {Function}
+   */
+  pluralize.isSingular = checkWord(
+    irregularPlurals, irregularSingles, singularRules
+  );
+
+  /**
+   * Add a pluralization rule to the collection.
+   *
+   * @param {(string|RegExp)} rule
+   * @param {string}          replacement
+   */
+  pluralize.addPluralRule = function (rule, replacement) {
+    pluralRules.push([sanitizeRule(rule), replacement]);
+  };
+
+  /**
+   * Add a singularization rule to the collection.
+   *
+   * @param {(string|RegExp)} rule
+   * @param {string}          replacement
+   */
+  pluralize.addSingularRule = function (rule, replacement) {
+    singularRules.push([sanitizeRule(rule), replacement]);
+  };
+
+  /**
+   * Add an uncountable word rule.
+   *
+   * @param {(string|RegExp)} word
+   */
+  pluralize.addUncountableRule = function (word) {
+    if (typeof word === 'string') {
+      uncountables[word.toLowerCase()] = true;
+      return;
+    }
+
+    // Set singular and plural references for the word.
+    pluralize.addPluralRule(word, '$0');
+    pluralize.addSingularRule(word, '$0');
+  };
+
+  /**
+   * Add an irregular word definition.
+   *
+   * @param {string} single
+   * @param {string} plural
+   */
+  pluralize.addIrregularRule = function (single, plural) {
+    plural = plural.toLowerCase();
+    single = single.toLowerCase();
+
+    irregularSingles[single] = plural;
+    irregularPlurals[plural] = single;
+  };
+
+  /**
+   * Irregular rules.
+   */
+  [
+    // Pronouns.
+    ['I', 'we'],
+    ['me', 'us'],
+    ['he', 'they'],
+    ['she', 'they'],
+    ['them', 'them'],
+    ['myself', 'ourselves'],
+    ['yourself', 'yourselves'],
+    ['itself', 'themselves'],
+    ['herself', 'themselves'],
+    ['himself', 'themselves'],
+    ['themself', 'themselves'],
+    ['is', 'are'],
+    ['was', 'were'],
+    ['has', 'have'],
+    ['this', 'these'],
+    ['that', 'those'],
+    // Words ending in with a consonant and `o`.
+    ['echo', 'echoes'],
+    ['dingo', 'dingoes'],
+    ['volcano', 'volcanoes'],
+    ['tornado', 'tornadoes'],
+    ['torpedo', 'torpedoes'],
+    // Ends with `us`.
+    ['genus', 'genera'],
+    ['viscus', 'viscera'],
+    // Ends with `ma`.
+    ['stigma', 'stigmata'],
+    ['stoma', 'stomata'],
+    ['dogma', 'dogmata'],
+    ['lemma', 'lemmata'],
+    ['schema', 'schemata'],
+    ['anathema', 'anathemata'],
+    // Other irregular rules.
+    ['ox', 'oxen'],
+    ['axe', 'axes'],
+    ['die', 'dice'],
+    ['yes', 'yeses'],
+    ['foot', 'feet'],
+    ['eave', 'eaves'],
+    ['goose', 'geese'],
+    ['tooth', 'teeth'],
+    ['quiz', 'quizzes'],
+    ['human', 'humans'],
+    ['proof', 'proofs'],
+    ['carve', 'carves'],
+    ['valve', 'valves'],
+    ['looey', 'looies'],
+    ['thief', 'thieves'],
+    ['groove', 'grooves'],
+    ['pickaxe', 'pickaxes'],
+    ['whiskey', 'whiskies']
+  ].forEach(function (rule) {
+    return pluralize.addIrregularRule(rule[0], rule[1]);
+  });
+
+  /**
+   * Pluralization rules.
+   */
+  [
+    [/s?$/i, 's'],
+    [/[^\u0000-\u007F]$/i, '$0'],
+    [/([^aeiou]ese)$/i, '$1'],
+    [/(ax|test)is$/i, '$1es'],
+    [/(alias|[^aou]us|tlas|gas|ris)$/i, '$1es'],
+    [/(e[mn]u)s?$/i, '$1s'],
+    [/([^l]ias|[aeiou]las|[emjzr]as|[iu]am)$/i, '$1'],
+    [/(alumn|syllab|octop|vir|radi|nucle|fung|cact|stimul|termin|bacill|foc|uter|loc|strat)(?:us|i)$/i, '$1i'],
+    [/(alumn|alg|vertebr)(?:a|ae)$/i, '$1ae'],
+    [/(seraph|cherub)(?:im)?$/i, '$1im'],
+    [/(her|at|gr)o$/i, '$1oes'],
+    [/(agend|addend|millenni|dat|extrem|bacteri|desiderat|strat|candelabr|errat|ov|symposi|curricul|automat|quor)(?:a|um)$/i, '$1a'],
+    [/(apheli|hyperbat|periheli|asyndet|noumen|phenomen|criteri|organ|prolegomen|hedr|automat)(?:a|on)$/i, '$1a'],
+    [/sis$/i, 'ses'],
+    [/(?:(kni|wi|li)fe|(ar|l|ea|eo|oa|hoo)f)$/i, '$1$2ves'],
+    [/([^aeiouy]|qu)y$/i, '$1ies'],
+    [/([^ch][ieo][ln])ey$/i, '$1ies'],
+    [/(x|ch|ss|sh|zz)$/i, '$1es'],
+    [/(matr|cod|mur|sil|vert|ind|append)(?:ix|ex)$/i, '$1ices'],
+    [/(m|l)(?:ice|ouse)$/i, '$1ice'],
+    [/(pe)(?:rson|ople)$/i, '$1ople'],
+    [/(child)(?:ren)?$/i, '$1ren'],
+    [/eaux$/i, '$0'],
+    [/m[ae]n$/i, 'men'],
+    ['thou', 'you']
+  ].forEach(function (rule) {
+    return pluralize.addPluralRule(rule[0], rule[1]);
+  });
+
+  /**
+   * Singularization rules.
+   */
+  [
+    [/s$/i, ''],
+    [/(ss)$/i, '$1'],
+    [/(wi|kni|(?:after|half|high|low|mid|non|night|[^\w]|^)li)ves$/i, '$1fe'],
+    [/(ar|(?:wo|[ae])l|[eo][ao])ves$/i, '$1f'],
+    [/ies$/i, 'y'],
+    [/\b([pl]|zomb|(?:neck|cross)?t|coll|faer|food|gen|goon|group|lass|talk|goal|cut)ies$/i, '$1ie'],
+    [/\b(mon|smil)ies$/i, '$1ey'],
+    [/(m|l)ice$/i, '$1ouse'],
+    [/(seraph|cherub)im$/i, '$1'],
+    [/(x|ch|ss|sh|zz|tto|go|cho|alias|[^aou]us|tlas|gas|(?:her|at|gr)o|ris)(?:es)?$/i, '$1'],
+    [/(analy|ba|diagno|parenthe|progno|synop|the|empha|cri)(?:sis|ses)$/i, '$1sis'],
+    [/(movie|twelve|abuse|e[mn]u)s$/i, '$1'],
+    [/(test)(?:is|es)$/i, '$1is'],
+    [/(alumn|syllab|octop|vir|radi|nucle|fung|cact|stimul|termin|bacill|foc|uter|loc|strat)(?:us|i)$/i, '$1us'],
+    [/(agend|addend|millenni|dat|extrem|bacteri|desiderat|strat|candelabr|errat|ov|symposi|curricul|quor)a$/i, '$1um'],
+    [/(apheli|hyperbat|periheli|asyndet|noumen|phenomen|criteri|organ|prolegomen|hedr|automat)a$/i, '$1on'],
+    [/(alumn|alg|vertebr)ae$/i, '$1a'],
+    [/(cod|mur|sil|vert|ind)ices$/i, '$1ex'],
+    [/(matr|append)ices$/i, '$1ix'],
+    [/(pe)(rson|ople)$/i, '$1rson'],
+    [/(child)ren$/i, '$1'],
+    [/(eau)x?$/i, '$1'],
+    [/men$/i, 'man']
+  ].forEach(function (rule) {
+    return pluralize.addSingularRule(rule[0], rule[1]);
+  });
+
+  /**
+   * Uncountable rules.
+   */
+  [
+    // Singular words with no plurals.
+    'adulthood',
+    'advice',
+    'agenda',
+    'aid',
+    'alcohol',
+    'ammo',
+    'anime',
+    'athletics',
+    'audio',
+    'bison',
+    'blood',
+    'bream',
+    'buffalo',
+    'butter',
+    'carp',
+    'cash',
+    'chassis',
+    'chess',
+    'clothing',
+    'cod',
+    'commerce',
+    'cooperation',
+    'corps',
+    'debris',
+    'diabetes',
+    'digestion',
+    'elk',
+    'energy',
+    'equipment',
+    'excretion',
+    'expertise',
+    'flounder',
+    'fun',
+    'gallows',
+    'garbage',
+    'graffiti',
+    'headquarters',
+    'health',
+    'herpes',
+    'highjinks',
+    'homework',
+    'housework',
+    'information',
+    'jeans',
+    'justice',
+    'kudos',
+    'labour',
+    'literature',
+    'machinery',
+    'mackerel',
+    'mail',
+    'media',
+    'mews',
+    'moose',
+    'music',
+    'manga',
+    'news',
+    'pike',
+    'plankton',
+    'pliers',
+    'pollution',
+    'premises',
+    'rain',
+    'research',
+    'rice',
+    'salmon',
+    'scissors',
+    'series',
+    'sewage',
+    'shambles',
+    'shrimp',
+    'species',
+    'staff',
+    'swine',
+    'tennis',
+    'traffic',
+    'transporation',
+    'trout',
+    'tuna',
+    'wealth',
+    'welfare',
+    'whiting',
+    'wildebeest',
+    'wildlife',
+    'you',
+    // Regexes.
+    /[^aeiou]ese$/i, // "chinese", "japanese"
+    /deer$/i, // "deer", "reindeer"
+    /fish$/i, // "fish", "blowfish", "angelfish"
+    /measles$/i,
+    /o[iu]s$/i, // "carnivorous"
+    /pox$/i, // "chickpox", "smallpox"
+    /sheep$/i
+  ].forEach(pluralize.addUncountableRule);
+
+  return pluralize;
+});
+
+
+/***/ }),
+
 /***/ "./node_modules/popper.js/dist/esm/popper.js":
 /*!***************************************************!*\
   !*** ./node_modules/popper.js/dist/esm/popper.js ***!
@@ -97661,6 +98154,61 @@ if (false) {} else {
 
 /***/ }),
 
+/***/ "./node_modules/slugify/index.js":
+/*!***************************************!*\
+  !*** ./node_modules/slugify/index.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+;(function (name, root, factory) {
+  if (true) {
+    module.exports = factory()
+    module.exports['default'] = factory()
+  }
+  /* istanbul ignore next */
+  else {}
+}('slugify', this, function () {
+  /* eslint-disable */
+  var charMap = JSON.parse('{"$":"dollar","%":"percent","&":"and","<":"less",">":"greater","|":"or","¢":"cent","£":"pound","¤":"currency","¥":"yen","©":"(c)","ª":"a","®":"(r)","º":"o","À":"A","Á":"A","Â":"A","Ã":"A","Ä":"A","Å":"A","Æ":"AE","Ç":"C","È":"E","É":"E","Ê":"E","Ë":"E","Ì":"I","Í":"I","Î":"I","Ï":"I","Ð":"D","Ñ":"N","Ò":"O","Ó":"O","Ô":"O","Õ":"O","Ö":"O","Ø":"O","Ù":"U","Ú":"U","Û":"U","Ü":"U","Ý":"Y","Þ":"TH","ß":"ss","à":"a","á":"a","â":"a","ã":"a","ä":"a","å":"a","æ":"ae","ç":"c","è":"e","é":"e","ê":"e","ë":"e","ì":"i","í":"i","î":"i","ï":"i","ð":"d","ñ":"n","ò":"o","ó":"o","ô":"o","õ":"o","ö":"o","ø":"o","ù":"u","ú":"u","û":"u","ü":"u","ý":"y","þ":"th","ÿ":"y","Ā":"A","ā":"a","Ă":"A","ă":"a","Ą":"A","ą":"a","Ć":"C","ć":"c","Č":"C","č":"c","Ď":"D","ď":"d","Đ":"DJ","đ":"dj","Ē":"E","ē":"e","Ė":"E","ė":"e","Ę":"e","ę":"e","Ě":"E","ě":"e","Ğ":"G","ğ":"g","Ģ":"G","ģ":"g","Ĩ":"I","ĩ":"i","Ī":"i","ī":"i","Į":"I","į":"i","İ":"I","ı":"i","Ķ":"k","ķ":"k","Ļ":"L","ļ":"l","Ľ":"L","ľ":"l","Ł":"L","ł":"l","Ń":"N","ń":"n","Ņ":"N","ņ":"n","Ň":"N","ň":"n","Ő":"O","ő":"o","Œ":"OE","œ":"oe","Ŕ":"R","ŕ":"r","Ř":"R","ř":"r","Ś":"S","ś":"s","Ş":"S","ş":"s","Š":"S","š":"s","Ţ":"T","ţ":"t","Ť":"T","ť":"t","Ũ":"U","ũ":"u","Ū":"u","ū":"u","Ů":"U","ů":"u","Ű":"U","ű":"u","Ų":"U","ų":"u","Ź":"Z","ź":"z","Ż":"Z","ż":"z","Ž":"Z","ž":"z","ƒ":"f","Ơ":"O","ơ":"o","Ư":"U","ư":"u","ǈ":"LJ","ǉ":"lj","ǋ":"NJ","ǌ":"nj","Ș":"S","ș":"s","Ț":"T","ț":"t","˚":"o","Ά":"A","Έ":"E","Ή":"H","Ί":"I","Ό":"O","Ύ":"Y","Ώ":"W","ΐ":"i","Α":"A","Β":"B","Γ":"G","Δ":"D","Ε":"E","Ζ":"Z","Η":"H","Θ":"8","Ι":"I","Κ":"K","Λ":"L","Μ":"M","Ν":"N","Ξ":"3","Ο":"O","Π":"P","Ρ":"R","Σ":"S","Τ":"T","Υ":"Y","Φ":"F","Χ":"X","Ψ":"PS","Ω":"W","Ϊ":"I","Ϋ":"Y","ά":"a","έ":"e","ή":"h","ί":"i","ΰ":"y","α":"a","β":"b","γ":"g","δ":"d","ε":"e","ζ":"z","η":"h","θ":"8","ι":"i","κ":"k","λ":"l","μ":"m","ν":"n","ξ":"3","ο":"o","π":"p","ρ":"r","ς":"s","σ":"s","τ":"t","υ":"y","φ":"f","χ":"x","ψ":"ps","ω":"w","ϊ":"i","ϋ":"y","ό":"o","ύ":"y","ώ":"w","Ё":"Yo","Ђ":"DJ","Є":"Ye","І":"I","Ї":"Yi","Ј":"J","Љ":"LJ","Њ":"NJ","Ћ":"C","Џ":"DZ","А":"A","Б":"B","В":"V","Г":"G","Д":"D","Е":"E","Ж":"Zh","З":"Z","И":"I","Й":"J","К":"K","Л":"L","М":"M","Н":"N","О":"O","П":"P","Р":"R","С":"S","Т":"T","У":"U","Ф":"F","Х":"H","Ц":"C","Ч":"Ch","Ш":"Sh","Щ":"Sh","Ъ":"U","Ы":"Y","Ь":"","Э":"E","Ю":"Yu","Я":"Ya","а":"a","б":"b","в":"v","г":"g","д":"d","е":"e","ж":"zh","з":"z","и":"i","й":"j","к":"k","л":"l","м":"m","н":"n","о":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ф":"f","х":"h","ц":"c","ч":"ch","ш":"sh","щ":"sh","ъ":"u","ы":"y","ь":"","э":"e","ю":"yu","я":"ya","ё":"yo","ђ":"dj","є":"ye","і":"i","ї":"yi","ј":"j","љ":"lj","њ":"nj","ћ":"c","џ":"dz","Ґ":"G","ґ":"g","฿":"baht","ა":"a","ბ":"b","გ":"g","დ":"d","ე":"e","ვ":"v","ზ":"z","თ":"t","ი":"i","კ":"k","ლ":"l","მ":"m","ნ":"n","ო":"o","პ":"p","ჟ":"zh","რ":"r","ს":"s","ტ":"t","უ":"u","ფ":"f","ქ":"k","ღ":"gh","ყ":"q","შ":"sh","ჩ":"ch","ც":"ts","ძ":"dz","წ":"ts","ჭ":"ch","ხ":"kh","ჯ":"j","ჰ":"h","ẞ":"SS","Ạ":"A","ạ":"a","Ả":"A","ả":"a","Ấ":"A","ấ":"a","Ầ":"A","ầ":"a","Ẩ":"A","ẩ":"a","Ẫ":"A","ẫ":"a","Ậ":"A","ậ":"a","Ắ":"A","ắ":"a","Ằ":"A","ằ":"a","Ẳ":"A","ẳ":"a","Ẵ":"A","ẵ":"a","Ặ":"A","ặ":"a","Ẹ":"E","ẹ":"e","Ẻ":"E","ẻ":"e","Ẽ":"E","ẽ":"e","Ế":"E","ế":"e","Ề":"E","ề":"e","Ể":"E","ể":"e","Ễ":"E","ễ":"e","Ệ":"E","ệ":"e","Ỉ":"I","ỉ":"i","Ị":"I","ị":"i","Ọ":"O","ọ":"o","Ỏ":"O","ỏ":"o","Ố":"O","ố":"o","Ồ":"O","ồ":"o","Ổ":"O","ổ":"o","Ỗ":"O","ỗ":"o","Ộ":"O","ộ":"o","Ớ":"O","ớ":"o","Ờ":"O","ờ":"o","Ở":"O","ở":"o","Ỡ":"O","ỡ":"o","Ợ":"O","ợ":"o","Ụ":"U","ụ":"u","Ủ":"U","ủ":"u","Ứ":"U","ứ":"u","Ừ":"U","ừ":"u","Ử":"U","ử":"u","Ữ":"U","ữ":"u","Ự":"U","ự":"u","Ỳ":"Y","ỳ":"y","Ỵ":"Y","ỵ":"y","Ỷ":"Y","ỷ":"y","Ỹ":"Y","ỹ":"y","‘":"\'","’":"\'","“":"\\\"","”":"\\\"","†":"+","•":"*","…":"...","₠":"ecu","₢":"cruzeiro","₣":"french franc","₤":"lira","₥":"mill","₦":"naira","₧":"peseta","₨":"rupee","₩":"won","₪":"new shequel","₫":"dong","€":"euro","₭":"kip","₮":"tugrik","₯":"drachma","₰":"penny","₱":"peso","₲":"guarani","₳":"austral","₴":"hryvnia","₵":"cedi","₹":"indian rupee","₽":"russian ruble","₿":"bitcoin","℠":"sm","™":"tm","∂":"d","∆":"delta","∑":"sum","∞":"infinity","♥":"love","元":"yuan","円":"yen","﷼":"rial"}')
+  /* eslint-enable */
+
+  function replace (string, options) {
+    if (typeof string !== 'string') {
+      throw new Error('slugify: string argument expected')
+    }
+
+    options = (typeof options === 'string')
+      ? {replacement: options}
+      : options || {}
+
+    var slug = string.split('')
+      .reduce(function (result, ch) {
+        return result + (charMap[ch] || ch)
+          // allowed
+          .replace(options.remove || /[^\w\s$*_+~.()'"!\-:@]/g, '')
+      }, '')
+      // trim leading/trailing spaces
+      .trim()
+      // convert spaces
+      .replace(/[-\s]+/g, options.replacement || '-')
+
+    return options.lower ? slug.toLowerCase() : slug
+  }
+
+  replace.extend = function (customMap) {
+    for (var key in customMap) {
+      charMap[key] = customMap[key]
+    }
+  }
+
+  return replace
+}))
+
+
+/***/ }),
+
 /***/ "./node_modules/symbol-observable/es/index.js":
 /*!****************************************************!*\
   !*** ./node_modules/symbol-observable/es/index.js ***!
@@ -98719,7 +99267,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_apollo__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_apollo__WEBPACK_IMPORTED_MODULE_4__);
 /* harmony import */ var _Header__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./Header */ "./resources/js/components/Header.js");
 /* harmony import */ var _listings_Projects__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./listings/Projects */ "./resources/js/components/listings/Projects.js");
-/* harmony import */ var _listings_types__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./listings/types */ "./resources/js/components/listings/types.js");
+/* harmony import */ var _listings_Types__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./listings/Types */ "./resources/js/components/listings/Types.js");
+/* harmony import */ var _listings_FieldTypes__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./listings/FieldTypes */ "./resources/js/components/listings/FieldTypes.js");
+/* harmony import */ var _listings_Modules__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./listings/Modules */ "./resources/js/components/listings/Modules.js");
+/* harmony import */ var _project_Project__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./project/Project */ "./resources/js/components/project/Project.js");
+
+
+
 
 
 
@@ -98742,8 +99296,17 @@ var App = function App(props) {
     path: "/",
     component: _listings_Projects__WEBPACK_IMPORTED_MODULE_6__["default"]
   }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__["Route"], {
+    path: "/projects/:id",
+    component: _project_Project__WEBPACK_IMPORTED_MODULE_10__["default"]
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__["Route"], {
     path: "/types",
-    component: _listings_types__WEBPACK_IMPORTED_MODULE_8__["default"]
+    component: _listings_Types__WEBPACK_IMPORTED_MODULE_7__["default"]
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__["Route"], {
+    path: "/fieldtypes",
+    component: _listings_FieldTypes__WEBPACK_IMPORTED_MODULE_8__["default"]
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__["Route"], {
+    path: "/modules",
+    component: _listings_Modules__WEBPACK_IMPORTED_MODULE_9__["default"]
   }))));
 };
 
@@ -98792,12 +99355,604 @@ var Header = function Header(props) {
   }, "Types")), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", {
     className: "mr-12"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Link"], {
-    to: "/fields",
+    to: "/fieldtypes",
     className: "text-grey-darkest no-underline"
-  }, "Fields")))));
+  }, "Field types")), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", {
+    className: "mr-12"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Link"], {
+    to: "/modules",
+    className: "text-grey-darkest no-underline"
+  }, "Modules")))));
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (Header);
+
+/***/ }),
+
+/***/ "./resources/js/components/listings/FieldTypes.js":
+/*!********************************************************!*\
+  !*** ./resources/js/components/listings/FieldTypes.js ***!
+  \********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var react_apollo__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-apollo */ "./node_modules/react-apollo/react-apollo.browser.umd.js");
+/* harmony import */ var react_apollo__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_apollo__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _queries_queries__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../queries/queries */ "./resources/js/queries/queries.js");
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
+
+
+
+var FieldTypes = function FieldTypes(props) {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "md:flex md:justify-around mt-16"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldTypesList, null), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldTypesForm, null));
+};
+
+var FieldTypesList = function FieldTypesList(props) {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "w-full max-w-md"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+    className: "text-grey-darker text-xxl font-normal mb-4"
+  }, "Field types"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("hr", {
+    className: "border-b my-4"
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_FIELD_TYPES_BY_CMS"]
+  }, function (_ref) {
+    var loading = _ref.loading,
+        error = _ref.error,
+        data = _ref.data;
+    if (loading) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Loading\u2026");
+    if (error) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Loading failed\u2026");
+    return data.systems.map(function (cms, index) {
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldListCms, {
+        cms: cms,
+        key: "fieldcms-".concat(index),
+        last: data.systems.length === index + 1
+      });
+    });
+  })));
+};
+
+var FieldListCms = function FieldListCms(_ref2) {
+  var cms = _ref2.cms,
+      last = _ref2.last;
+
+  var groupedTypes = _.groupBy(cms.fieldTypes, "group");
+
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "mb-4"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+    className: "text-grey-darker text-xl font-normal mb-6"
+  }, cms.name), Object.keys(groupedTypes).map(function (key, index) {
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-6"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h3", {
+      className: "text-sm uppercase text-grey-dark mb-2"
+    }, key === "null" ? "No group" : key), groupedTypes[key].map(function (item, index) {
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldTypeListItem, {
+        type: item,
+        key: "fieldtype-".concat(item.id)
+      });
+    }));
+  }), !last && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("hr", {
+    className: "border-b my-4"
+  }));
+};
+
+var FieldTypeListItem =
+/*#__PURE__*/
+function (_PureComponent) {
+  _inherits(FieldTypeListItem, _PureComponent);
+
+  function FieldTypeListItem() {
+    var _getPrototypeOf2;
+
+    var _this;
+
+    _classCallCheck(this, FieldTypeListItem);
+
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(FieldTypeListItem)).call.apply(_getPrototypeOf2, [this].concat(args)));
+
+    _defineProperty(_assertThisInitialized(_assertThisInitialized(_this)), "state", {
+      edit: false
+    });
+
+    _defineProperty(_assertThisInitialized(_assertThisInitialized(_this)), "toggleEdit", function () {
+      _this.setState({
+        edit: !_this.state.edit
+      });
+    });
+
+    return _this;
+  }
+
+  _createClass(FieldTypeListItem, [{
+    key: "render",
+    value: function render() {
+      var type = this.props.type;
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react__WEBPACK_IMPORTED_MODULE_0___default.a.Fragment, null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "py-2 text-black block hover:bg-grey-lighter flex justify-between"
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
+        className: "flex-1"
+      }, type.name), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
+        className: "flex"
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+        onClick: this.toggleEdit,
+        className: "mr-4"
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fas fa-edit"
+      })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(DeleteFieldType, {
+        typeId: type.id
+      }))), this.state.edit && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(EditFieldTypeForm, {
+        type: type,
+        toggleEdit: this.toggleEdit
+      }));
+    }
+  }]);
+
+  return FieldTypeListItem;
+}(react__WEBPACK_IMPORTED_MODULE_0__["PureComponent"]);
+
+var EditFieldTypeForm = function EditFieldTypeForm(_ref3) {
+  var type = _ref3.type,
+      toggleEdit = _ref3.toggleEdit;
+  var name;
+  var group;
+  var module;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Mutation"], {
+    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["UPDATE_FIELD_TYPE"],
+    refreshQueries: [{
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_FIELD_TYPES_BY_CMS"]
+    }],
+    onCompleted: toggleEdit
+  }, function (editFieldType, _ref4) {
+    var data = _ref4.data;
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
+      onSubmit: function onSubmit(event) {
+        event.preventDefault();
+        editFieldType({
+          variables: {
+            id: type.id,
+            name: name.value,
+            group: group.value,
+            module_id: module.value
+          }
+        });
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-4"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "name"
+    }, "Type name"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline",
+      type: "text",
+      placeholder: "Type name",
+      name: "name",
+      ref: function ref(node) {
+        name = node;
+      },
+      defaultValue: type.name
+    })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-4"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "group"
+    }, "Type group"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline",
+      type: "text",
+      placeholder: "Type name",
+      name: "group",
+      ref: function ref(node) {
+        group = node;
+      },
+      defaultValue: type.group
+    })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-4"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "cms_id"
+    }, "Module"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("select", {
+      name: "cms_id",
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker mb-0 leading-tight focus:outline-none focus:shadow-outline",
+      ref: function ref(node) {
+        module = node;
+      },
+      defaultValue: type.module_id
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+      value: ""
+    }, "None"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_MODULES_BY_CMS"]
+    }, function (_ref5) {
+      var loading = _ref5.loading,
+          error = _ref5.error,
+          data = _ref5.data;
+      if (loading) return null;
+      if (error) return null;
+      return data.systems.map(function (system, index) {
+        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("optgroup", {
+          value: system.id,
+          key: "system-".concat(index),
+          label: system.name
+        }, system.modules.map(function (module, index) {
+          return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+            value: module.id,
+            key: "module-".concat(module.id)
+          }, module.name);
+        }));
+      });
+    }))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "flex items-center justify-between"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+      className: "bg-blue hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline",
+      type: "submit"
+    }, "Save")));
+  });
+};
+
+var DeleteFieldType = function DeleteFieldType(_ref6) {
+  var typeId = _ref6.typeId;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Mutation"], {
+    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["DELETE_FIELD_TYPE"],
+    refetchQueries: [{
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_FIELD_TYPES_BY_CMS"]
+    }]
+  }, function (deleteFieldType, _ref7) {
+    var data = _ref7.data;
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
+      onSubmit: function onSubmit(event) {
+        event.preventDefault();
+        deleteFieldType({
+          variables: {
+            id: typeId
+          }
+        });
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+      type: "submit"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+      className: "fas fa-trash-alt"
+    })));
+  });
+};
+
+var FieldTypesForm = function FieldTypesForm(props) {
+  var name;
+  var group;
+  var module;
+  var cms;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "w-full max-w-md"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Mutation"], {
+    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["CREATE_FIELD_TYPE"],
+    refetchQueries: [{
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_FIELD_TYPES_BY_CMS"]
+    }]
+  }, function (createFieldType, _ref8) {
+    var data = _ref8.data;
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
+      className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+      onSubmit: function onSubmit(event) {
+        event.preventDefault();
+        createFieldType({
+          variables: {
+            name: name.value,
+            group: group.value,
+            cms_id: cms.value,
+            module_id: module.value
+          }
+        });
+        name.value = "";
+        name.focus();
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+      className: "text-grey-darker text-xxl font-normal mb-4"
+    }, "Create new field type"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-4"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "name"
+    }, "Type name"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline",
+      type: "text",
+      placeholder: "Type name",
+      name: "name",
+      ref: function ref(node) {
+        name = node;
+      }
+    })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-4"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "group"
+    }, "Type group"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline",
+      type: "text",
+      placeholder: "Text",
+      name: "group",
+      ref: function ref(node) {
+        group = node;
+      }
+    })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-4"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "cms_id"
+    }, "Module"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("select", {
+      name: "cms_id",
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker mb-0 leading-tight focus:outline-none focus:shadow-outline",
+      ref: function ref(node) {
+        module = node;
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+      value: ""
+    }, "None"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_MODULES_BY_CMS"]
+    }, function (_ref9) {
+      var loading = _ref9.loading,
+          error = _ref9.error,
+          data = _ref9.data;
+      if (loading) return null;
+      if (error) return null;
+      return data.systems.map(function (system, index) {
+        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("optgroup", {
+          value: system.id,
+          key: "system-".concat(index),
+          label: system.name
+        }, system.modules.map(function (module, index) {
+          return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+            value: module.id,
+            key: "module-".concat(module.id)
+          }, module.name);
+        }));
+      });
+    }))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-6"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "cms_id"
+    }, "CMS"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("select", {
+      name: "cms_id",
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker mb-3 leading-tight focus:outline-none focus:shadow-outline",
+      ref: function ref(node) {
+        cms = node;
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_SYSTEMS"]
+    }, function (_ref10) {
+      var loading = _ref10.loading,
+          error = _ref10.error,
+          data = _ref10.data;
+      if (loading) return null;
+      if (error) return null;
+      return data.systems.map(function (system, index) {
+        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+          value: system.id,
+          key: "system-".concat(index)
+        }, system.name);
+      });
+    }))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "flex items-center justify-between"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+      className: "bg-blue hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline",
+      type: "submit"
+    }, "Create")));
+  }));
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (FieldTypes);
+
+/***/ }),
+
+/***/ "./resources/js/components/listings/Modules.js":
+/*!*****************************************************!*\
+  !*** ./resources/js/components/listings/Modules.js ***!
+  \*****************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var react_apollo__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-apollo */ "./node_modules/react-apollo/react-apollo.browser.umd.js");
+/* harmony import */ var react_apollo__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_apollo__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _queries_queries__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../queries/queries */ "./resources/js/queries/queries.js");
+
+
+
+
+var Types = function Types(props) {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "md:flex md:justify-around mt-16"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ModuleList, null), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ModuleForm, null));
+};
+
+var ModuleList = function ModuleList(props) {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "w-full max-w-md"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+    className: "text-grey-darker text-xxl font-normal mb-4"
+  }, "Modules"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("hr", {
+    className: "border-b my-4"
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_MODULES_BY_CMS"]
+  }, function (_ref) {
+    var loading = _ref.loading,
+        error = _ref.error,
+        data = _ref.data;
+    if (loading) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Loading\u2026");
+    if (error) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Loading failed\u2026");
+    return data.systems.map(function (cms, index) {
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ModuleListCms, {
+        cms: cms,
+        key: "typecms-".concat(index),
+        last: data.systems.length === index + 1
+      });
+    });
+  })));
+};
+
+var ModuleListCms = function ModuleListCms(_ref2) {
+  var cms = _ref2.cms,
+      last = _ref2.last;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "mb-4"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+    className: "text-grey-darker text-xl font-normal mb-4"
+  }, cms.name), cms.modules.map(function (module, index) {
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ModuleListItem, {
+      module: module,
+      key: "module-".concat(module.id)
+    });
+  }), !last && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("hr", {
+    className: "border-b my-4"
+  }));
+};
+
+var ModuleListItem = function ModuleListItem(props) {
+  console.log(props.module);
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "py-4 text-black block hover:bg-grey-lighter flex justify-between"
+  }, props.module.name, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(DeleteModule, {
+    moduleId: props.module.id
+  }));
+};
+
+var DeleteModule = function DeleteModule(_ref3) {
+  var typeId = _ref3.typeId;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Mutation"], {
+    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["DELETE_MODULE"],
+    refetchQueries: [{
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_MODULES_BY_CMS"]
+    }]
+  }, function (deleteType, _ref4) {
+    var data = _ref4.data;
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
+      onSubmit: function onSubmit(event) {
+        event.preventDefault();
+        deleteType({
+          variables: {
+            id: typeId
+          }
+        });
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+      type: "submit"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+      className: "fas fa-trash-alt"
+    })));
+  });
+};
+
+var ModuleForm = function ModuleForm(props) {
+  var name;
+  var cms;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "w-full max-w-md"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Mutation"], {
+    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["CREATE_MODULE"],
+    refetchQueries: [{
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_MODULES_BY_CMS"]
+    }]
+  }, function (createModule, _ref5) {
+    var data = _ref5.data;
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
+      className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+      onSubmit: function onSubmit(event) {
+        event.preventDefault();
+        createModule({
+          variables: {
+            name: name.value,
+            cms_id: cms.value
+          }
+        });
+        name.value = "";
+        name.focus();
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+      className: "text-grey-darker text-xxl font-normal mb-4"
+    }, "Create new type"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-4"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "username"
+    }, "Type name"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline",
+      type: "text",
+      placeholder: "Type name",
+      name: "name",
+      ref: function ref(node) {
+        name = node;
+      }
+    })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-6"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "password"
+    }, "CMS"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("select", {
+      name: "cms_id",
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker mb-3 leading-tight focus:outline-none focus:shadow-outline",
+      ref: function ref(node) {
+        cms = node;
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_SYSTEMS"]
+    }, function (_ref6) {
+      var loading = _ref6.loading,
+          error = _ref6.error,
+          data = _ref6.data;
+      if (loading) return null;
+      if (error) return null;
+      return data.systems.map(function (system, index) {
+        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+          value: system.id,
+          key: "system-".concat(index)
+        }, system.name);
+      });
+    }))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "flex items-center justify-between"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+      className: "bg-blue hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline",
+      type: "submit"
+    }, "Create")));
+  }));
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (Types);
 
 /***/ }),
 
@@ -98967,9 +100122,9 @@ var ProjectForm = function ProjectForm(props) {
 
 /***/ }),
 
-/***/ "./resources/js/components/listings/types.js":
+/***/ "./resources/js/components/listings/Types.js":
 /*!***************************************************!*\
-  !*** ./resources/js/components/listings/types.js ***!
+  !*** ./resources/js/components/listings/Types.js ***!
   \***************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
@@ -98988,7 +100143,7 @@ __webpack_require__.r(__webpack_exports__);
 var Types = function Types(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "md:flex md:justify-around mt-16"
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(TypeList, null));
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(TypeList, null), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(TypeForm, null));
 };
 
 var TypeList = function TypeList(props) {
@@ -99011,14 +100166,16 @@ var TypeList = function TypeList(props) {
     return data.systems.map(function (cms, index) {
       return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(TypeListCms, {
         cms: cms,
-        key: "typecms-".concat(index)
+        key: "typecms-".concat(index),
+        last: data.systems.length === index + 1
       });
     });
   })));
 };
 
 var TypeListCms = function TypeListCms(_ref2) {
-  var cms = _ref2.cms;
+  var cms = _ref2.cms,
+      last = _ref2.last;
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "mb-4"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
@@ -99028,17 +100185,439 @@ var TypeListCms = function TypeListCms(_ref2) {
       type: type,
       key: "type-".concat(type.id)
     });
+  }), !last && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("hr", {
+    className: "border-b my-4"
   }));
 };
 
 var TypeListItem = function TypeListItem(_ref3) {
   var type = _ref3.type;
-  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
-    className: "py-4 text-black block hover:bg-grey-lighter"
-  }, type.name);
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "py-4 text-black block hover:bg-grey-lighter flex justify-between"
+  }, type.name, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(DeleteType, {
+    typeId: type.id
+  }));
+};
+
+var DeleteType = function DeleteType(_ref4) {
+  var typeId = _ref4.typeId;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Mutation"], {
+    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["DELETE_TYPE"],
+    refetchQueries: [{
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_TYPES_BY_CMS"]
+    }]
+  }, function (deleteType, _ref5) {
+    var data = _ref5.data;
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
+      onSubmit: function onSubmit(event) {
+        event.preventDefault();
+        deleteType({
+          variables: {
+            id: typeId
+          }
+        });
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+      type: "submit"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+      className: "fas fa-trash-alt"
+    })));
+  });
+};
+
+var TypeForm = function TypeForm(props) {
+  var name;
+  var cms;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "w-full max-w-md"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Mutation"], {
+    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["CREATE_TYPE"],
+    refetchQueries: [{
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_TYPES_BY_CMS"]
+    }]
+  }, function (createType, _ref6) {
+    var data = _ref6.data;
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
+      className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+      onSubmit: function onSubmit(event) {
+        event.preventDefault();
+        createType({
+          variables: {
+            name: name.value,
+            cms_id: cms.value
+          }
+        });
+        name.value = "";
+        name.focus();
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+      className: "text-grey-darker text-xxl font-normal mb-4"
+    }, "Create new type"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-4"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "username"
+    }, "Type name"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline",
+      type: "text",
+      placeholder: "Type name",
+      name: "name",
+      ref: function ref(node) {
+        name = node;
+      }
+    })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "mb-6"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "password"
+    }, "CMS"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("select", {
+      name: "cms_id",
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker mb-3 leading-tight focus:outline-none focus:shadow-outline",
+      ref: function ref(node) {
+        cms = node;
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_SYSTEMS"]
+    }, function (_ref7) {
+      var loading = _ref7.loading,
+          error = _ref7.error,
+          data = _ref7.data;
+      if (loading) return null;
+      if (error) return null;
+      return data.systems.map(function (system, index) {
+        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+          value: system.id,
+          key: "system-".concat(index)
+        }, system.name);
+      });
+    }))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "flex items-center justify-between"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+      className: "bg-blue hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline",
+      type: "submit"
+    }, "Create")));
+  }));
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (Types);
+
+/***/ }),
+
+/***/ "./resources/js/components/project/Project.js":
+/*!****************************************************!*\
+  !*** ./resources/js/components/project/Project.js ***!
+  \****************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var react_apollo__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-apollo */ "./node_modules/react-apollo/react-apollo.browser.umd.js");
+/* harmony import */ var react_apollo__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_apollo__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var slugify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! slugify */ "./node_modules/slugify/index.js");
+/* harmony import */ var slugify__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(slugify__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var pluralize__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! pluralize */ "./node_modules/pluralize/pluralize.js");
+/* harmony import */ var pluralize__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(pluralize__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _queries_queries__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../queries/queries */ "./resources/js/queries/queries.js");
+/* harmony import */ var _ProjectHeader__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./ProjectHeader */ "./resources/js/components/project/ProjectHeader.js");
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
+
+
+
+
+
+
+var Project = function Project(props) {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react__WEBPACK_IMPORTED_MODULE_0__["Fragment"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["GET_PROJECT_BY_ID"],
+    variables: {
+      id: props.match.params.id
+    }
+  }, function (_ref) {
+    var data = _ref.data,
+        loading = _ref.loading,
+        error = _ref.error;
+    if (loading) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Loading\u2026");
+    if (error) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Error\u2026");
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ProjectWorkspace, {
+      project: data.projectById
+    });
+  }));
+};
+
+var ProjectWorkspace = function ProjectWorkspace(_ref2) {
+  var project = _ref2.project;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react__WEBPACK_IMPORTED_MODULE_0__["Fragment"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_ProjectHeader__WEBPACK_IMPORTED_MODULE_5__["default"], {
+    project: project
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ProjectTypes, {
+    project: project
+  }));
+};
+
+var ProjectTypes = function ProjectTypes(props) {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "py-4 px-8 mt-16"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["GET_TYPES_FOR_CMS"],
+    variables: {
+      cms_id: props.project.cms.id
+    }
+  }, function (_ref3) {
+    var data = _ref3.data,
+        loading = _ref3.loading,
+        error = _ref3.error;
+    if (loading) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Loading\u2026");
+    if (error) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Error\u2026");
+    return data.typesByCms.map(function (type, index) {
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ProjectType, {
+        type: type,
+        project: props.project,
+        key: "instanceType-".concat(type.id)
+      });
+    });
+  }));
+};
+
+var ProjectType =
+/*#__PURE__*/
+function (_PureComponent) {
+  _inherits(ProjectType, _PureComponent);
+
+  function ProjectType() {
+    var _getPrototypeOf2;
+
+    var _this;
+
+    _classCallCheck(this, ProjectType);
+
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(ProjectType)).call.apply(_getPrototypeOf2, [this].concat(args)));
+
+    _defineProperty(_assertThisInitialized(_assertThisInitialized(_this)), "state", {
+      createOpen: false
+    });
+
+    _defineProperty(_assertThisInitialized(_assertThisInitialized(_this)), "toggleCreateOpen", function () {
+      _this.setState({
+        createOpen: !_this.state.createOpen
+      });
+    });
+
+    return _this;
+  }
+
+  _createClass(ProjectType, [{
+    key: "render",
+    value: function render() {
+      var _this$props = this.props,
+          type = _this$props.type,
+          project = _this$props.project;
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "mb-10"
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+        className: "text-5xl text-grey mb-4"
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("em", null, pluralize__WEBPACK_IMPORTED_MODULE_3___default()(type.name))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(TypeInstanceList, {
+        type: type,
+        project: project
+      }), this.state.createOpen && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(CreateTypeInstanceForm, {
+        type: type,
+        project: project,
+        toggleCreateOpen: this.toggleCreateOpen
+      }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: "#",
+        className: "flex items-center no-underline text-blue-darker",
+        onClick: this.toggleCreateOpen
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fas fa-plus-square fa-3x mr-4"
+      }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", null, "Create new ", type.name))));
+    }
+  }]);
+
+  return ProjectType;
+}(react__WEBPACK_IMPORTED_MODULE_0__["PureComponent"]);
+
+var TypeInstanceList = function TypeInstanceList(props) {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["GET_INSTANCES_FOR_PROJECT_TYPE"],
+    variables: {
+      type_id: props.type.id,
+      project_id: props.project.id
+    }
+  }, function (_ref4) {
+    var data = _ref4.data,
+        loading = _ref4.loading,
+        error = _ref4.error;
+    if (loading) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Loading\u2026");
+    if (error) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Error\u2026");
+    return data.typeInstancesForProjectType.map(function (instance, index) {
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(TypeInstance, {
+        instance: instance,
+        key: "instance-".concat(instance.id)
+      });
+    });
+  });
+};
+
+var TypeInstance = function TypeInstance(props) {
+  var instance = props.instance;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "w-full bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+    className: "text-4xl text-grey-dark mb-4"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("em", null, instance.name)));
+};
+
+var CreateTypeInstanceForm = function CreateTypeInstanceForm(props) {
+  var name;
+  var machine_name;
+  var description;
+  var type = props.type,
+      project = props.project;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "w-full"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Mutation"], {
+    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["CREATE_TYPE_INSTANCE"],
+    refetchQueries: [{
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["GET_INSTANCES_FOR_PROJECT_TYPE"],
+      variables: {
+        project_id: project.id,
+        type_id: type.id
+      }
+    }],
+    onCompleted: props.toggleCreateOpen
+  }, function (createTypeInstance, _ref5) {
+    var data = _ref5.data;
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
+      className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+      onSubmit: function onSubmit(event) {
+        event.preventDefault();
+        createTypeInstance({
+          variables: {
+            name: name.value,
+            machine_name: machine_name.value,
+            description: description.value,
+            project_id: project.id,
+            type_id: type.id
+          }
+        });
+      }
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+      className: "text-grey-darker text-xxl font-normal mb-4"
+    }, "Create new ", type.name), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "flex"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "w-1/4 pr-4"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "name"
+    }, type.name, " name"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+      className: "mb-4 shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline",
+      type: "text",
+      placeholder: "Type name",
+      name: "name",
+      ref: function ref(node) {
+        name = node;
+      },
+      onChange: function onChange() {
+        machine_name.value = slugify__WEBPACK_IMPORTED_MODULE_2___default()(name.value, {
+          replacement: "_",
+          lower: true
+        });
+      }
+    }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "machine_name"
+    }, "Machine name"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline",
+      type: "text",
+      placeholder: "type_name",
+      name: "machine_name",
+      ref: function ref(node) {
+        machine_name = node;
+      }
+    })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "w-1/4 pl-4"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
+      className: "block text-grey-darker text-sm font-bold mb-2",
+      htmlFor: "description"
+    }, "Description"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("textarea", {
+      className: "shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline",
+      type: "text",
+      placeholder: "Provide a description for this type",
+      name: "description",
+      ref: function ref(node) {
+        description = node;
+      },
+      rows: "5"
+    })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "w-1/4 pl-4 self-end"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "flex items-center justify-between"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+      className: "bg-blue mb-1 hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline",
+      type: "submit"
+    }, "Create")))));
+  }));
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (Project);
+
+/***/ }),
+
+/***/ "./resources/js/components/project/ProjectHeader.js":
+/*!**********************************************************!*\
+  !*** ./resources/js/components/project/ProjectHeader.js ***!
+  \**********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+
+
+var ProjectHeader = function ProjectHeader(_ref) {
+  var project = _ref.project;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "bg-grey-darkest px-8 py-10"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h1", {
+    className: "text-white font-normal mb-4"
+  }, project.name), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+    className: "mb-4 text-white"
+  }, project.cms.name), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("hr", {
+    className: "border-b border-white mt-6 mb-4"
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+    className: "mb-0 text-white leading-loose"
+  }, project.description));
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ProjectHeader);
 
 /***/ }),
 
@@ -99046,19 +100625,162 @@ var TypeListItem = function TypeListItem(_ref3) {
 /*!*****************************************!*\
   !*** ./resources/js/queries/queries.js ***!
   \*****************************************/
-/*! exports provided: GET_PROJECTS, CREATE_PROJECT, GET_SYSTEMS, GET_TYPES_BY_CMS */
+/*! exports provided: GET_PROJECTS, GET_PROJECT_BY_ID, CREATE_PROJECT, GET_SYSTEMS, GET_TYPES_BY_CMS, GET_TYPES_FOR_CMS, CREATE_TYPE, DELETE_TYPE, GET_FIELD_TYPES_BY_CMS, CREATE_FIELD_TYPE, UPDATE_FIELD_TYPE, DELETE_FIELD_TYPE, GET_MODULES_BY_CMS, CREATE_MODULE, DELETE_MODULE, GET_INSTANCES_FOR_PROJECT_TYPE, CREATE_TYPE_INSTANCE */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_PROJECTS", function() { return GET_PROJECTS; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_PROJECT_BY_ID", function() { return GET_PROJECT_BY_ID; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CREATE_PROJECT", function() { return CREATE_PROJECT; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_SYSTEMS", function() { return GET_SYSTEMS; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_TYPES_BY_CMS", function() { return GET_TYPES_BY_CMS; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_TYPES_FOR_CMS", function() { return GET_TYPES_FOR_CMS; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CREATE_TYPE", function() { return CREATE_TYPE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DELETE_TYPE", function() { return DELETE_TYPE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_FIELD_TYPES_BY_CMS", function() { return GET_FIELD_TYPES_BY_CMS; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CREATE_FIELD_TYPE", function() { return CREATE_FIELD_TYPE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "UPDATE_FIELD_TYPE", function() { return UPDATE_FIELD_TYPE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DELETE_FIELD_TYPE", function() { return DELETE_FIELD_TYPE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_MODULES_BY_CMS", function() { return GET_MODULES_BY_CMS; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CREATE_MODULE", function() { return CREATE_MODULE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DELETE_MODULE", function() { return DELETE_MODULE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_INSTANCES_FOR_PROJECT_TYPE", function() { return GET_INSTANCES_FOR_PROJECT_TYPE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CREATE_TYPE_INSTANCE", function() { return CREATE_TYPE_INSTANCE; });
 /* harmony import */ var graphql_tag__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! graphql-tag */ "./node_modules/graphql-tag/src/index.js");
 /* harmony import */ var graphql_tag__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(graphql_tag__WEBPACK_IMPORTED_MODULE_0__);
-function _templateObject4() {
+function _templateObject17() {
+  var data = _taggedTemplateLiteral(["\n  mutation CreateTypeInstance(\n    $name: String!\n    $machine_name: String!\n    $description: String\n    $options: String\n    $type_id: ID!\n    $project_id: ID!\n  ) {\n    createTypeInstance(\n      name: $name\n      machine_name: $machine_name\n      description: $description\n      options: $options\n      type_id: $type_id\n      project_id: $project_id\n    ) {\n      id\n      name\n      description\n      options\n      type_id\n      project_id\n    }\n  }\n"]);
+
+  _templateObject17 = function _templateObject17() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject16() {
+  var data = _taggedTemplateLiteral(["\n  query TypeInstancesForProjectType($type_id: ID!, $project_id: ID!){\n    typeInstancesForProjectType(type_id: $type_id, project_id: $project_id) {\n      id\n      name\n      machine_name\n      description\n      options\n      type_id\n      project_id\n    }\n  }\n"]);
+
+  _templateObject16 = function _templateObject16() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject15() {
+  var data = _taggedTemplateLiteral(["\n  mutation DeleteModule($id: ID!) {\n    deleteModule(id: $id) {\n      id\n      name\n    }\n  }\n"]);
+
+  _templateObject15 = function _templateObject15() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject14() {
+  var data = _taggedTemplateLiteral(["\n  mutation CreateModule($name: String!, $cms_id: ID!) {\n    createModule(name: $name, cms_id: $cms_id) {\n      id\n      name\n    }\n  }\n"]);
+
+  _templateObject14 = function _templateObject14() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject13() {
+  var data = _taggedTemplateLiteral(["\n  {\n    systems {\n      id\n      name\n      modules {\n        id\n        name\n      }\n    }\n  }\n"]);
+
+  _templateObject13 = function _templateObject13() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject12() {
+  var data = _taggedTemplateLiteral(["\n  mutation DeleteFieldType($id: ID!) {\n    deleteFieldType(id: $id) {\n      id\n      name\n      group\n    }\n  }\n"]);
+
+  _templateObject12 = function _templateObject12() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject11() {
+  var data = _taggedTemplateLiteral(["\n  mutation UpdateFieldType(\n    $id: ID!\n    $name: String!\n    $group: String\n    $module_id: ID\n  ) {\n    updateFieldType(\n      id: $id\n      name: $name\n      group: $group\n      module_id: $module_id\n    ) {\n      id\n      name\n      group\n      module_id\n    }\n  }\n"]);
+
+  _templateObject11 = function _templateObject11() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject10() {
+  var data = _taggedTemplateLiteral(["\n  mutation CreateFieldType(\n    $name: String!\n    $cms_id: ID!\n    $group: String\n    $module_id: ID\n  ) {\n    createFieldType(\n      name: $name\n      cms_id: $cms_id\n      group: $group\n      module_id: $module_id\n    ) {\n      id\n      name\n      group\n    }\n  }\n"]);
+
+  _templateObject10 = function _templateObject10() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject9() {
+  var data = _taggedTemplateLiteral(["\n  {\n    systems {\n      id\n      name\n      fieldTypes {\n        id\n        name\n        group\n        module_id\n      }\n    }\n  }\n"]);
+
+  _templateObject9 = function _templateObject9() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject8() {
+  var data = _taggedTemplateLiteral(["\n  mutation DeleteType($id: ID!) {\n    deleteType(id: $id) {\n      id\n      name\n    }\n  }\n"]);
+
+  _templateObject8 = function _templateObject8() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject7() {
+  var data = _taggedTemplateLiteral(["\n  mutation CreateType($name: String!, $cms_id: ID!) {\n    createType(name: $name, cms_id: $cms_id) {\n      id\n      name\n    }\n  }\n"]);
+
+  _templateObject7 = function _templateObject7() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject6() {
+  var data = _taggedTemplateLiteral(["\n  query TypesByCms($cms_id: ID!) {\n    typesByCms(cms_id: $cms_id) {\n      id\n      name\n    }\n  }\n"]);
+
+  _templateObject6 = function _templateObject6() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject5() {
   var data = _taggedTemplateLiteral(["\n  {\n    systems {\n      id\n      name\n      types {\n        id\n        name\n      }\n    }\n  }\n"]);
+
+  _templateObject5 = function _templateObject5() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject4() {
+  var data = _taggedTemplateLiteral(["\n  {\n    systems {\n      id\n      name\n    }\n  }\n"]);
 
   _templateObject4 = function _templateObject4() {
     return data;
@@ -99068,7 +100790,7 @@ function _templateObject4() {
 }
 
 function _templateObject3() {
-  var data = _taggedTemplateLiteral(["\n  {\n    systems {\n      id\n      name\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  mutation CreateProject($name: String!, $description: String, $cms_id: ID!) {\n    createProject(name: $name, description: $description, cms_id: $cms_id) {\n      id\n      name\n      cms {\n        name\n      }\n    }\n  }\n"]);
 
   _templateObject3 = function _templateObject3() {
     return data;
@@ -99078,7 +100800,7 @@ function _templateObject3() {
 }
 
 function _templateObject2() {
-  var data = _taggedTemplateLiteral(["\n  mutation CreateProject($name: String!, $description: String, $cms_id: ID!) {\n    createProject(name: $name, description: $description, cms_id: $cms_id) {\n      id\n      name\n      cms {\n        name\n      }\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  query ProjectById($id: ID!) {\n    projectById(id: $id) {\n      id\n      name\n      description\n      cms {\n        id\n        name\n      }\n    }\n  }\n"]);
 
   _templateObject2 = function _templateObject2() {
     return data;
@@ -99101,9 +100823,22 @@ function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(
 
 
 var GET_PROJECTS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject());
-var CREATE_PROJECT = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject2());
-var GET_SYSTEMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject3());
-var GET_TYPES_BY_CMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject4());
+var GET_PROJECT_BY_ID = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject2());
+var CREATE_PROJECT = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject3());
+var GET_SYSTEMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject4());
+var GET_TYPES_BY_CMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject5());
+var GET_TYPES_FOR_CMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject6());
+var CREATE_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject7());
+var DELETE_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject8());
+var GET_FIELD_TYPES_BY_CMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject9());
+var CREATE_FIELD_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject10());
+var UPDATE_FIELD_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject11());
+var DELETE_FIELD_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject12());
+var GET_MODULES_BY_CMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject13());
+var CREATE_MODULE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject14());
+var DELETE_MODULE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject15());
+var GET_INSTANCES_FOR_PROJECT_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject16());
+var CREATE_TYPE_INSTANCE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject17());
 
 /***/ }),
 

@@ -16,9 +16,11 @@ class CreateTypeInstancesTable extends Migration
         Schema::create('type_instances', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
-            $table->text('description');
+            $table->string('machine_name');
+            $table->text('description')->nullable();
             $table->text('options')->nullable();
             $table->integer('type_id')->unsigned();
+            $table->integer('project_id')->unsigned();
             $table->timestamps();
         });
     }

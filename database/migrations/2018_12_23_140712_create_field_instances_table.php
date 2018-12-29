@@ -16,6 +16,7 @@ class CreateFieldInstancesTable extends Migration
         Schema::create('field_instances', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
+            $table->string('machine_name');
             $table->string('group')->nullable();
             $table->text('description')->nullable();
             $table->text('options')->nullable();

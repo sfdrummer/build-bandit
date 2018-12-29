@@ -5,7 +5,10 @@ import ApolloClient from "apollo-boost";
 import { ApolloProvider } from "react-apollo";
 import Header from "./Header";
 import Projects from "./listings/Projects";
-import Types from "./listings/types";
+import Types from "./listings/Types";
+import FieldTypes from "./listings/FieldTypes";
+import Modules from "./listings/Modules";
+import Project from "./project/Project";
 
 const client = new ApolloClient({
   uri: "/graphql"
@@ -18,9 +21,10 @@ const App = props => {
         <div className="container">
           <Header />
           <Route exact path="/" component={Projects} />
+          <Route path="/projects/:id" component={Project} />
           <Route path="/types" component={Types} />
-          {/*        <Route path="/fields" component={Fields} />
-  */}
+          <Route path="/fieldtypes" component={FieldTypes} />
+          <Route path="/modules" component={Modules} />
         </div>
       </Router>
     </ApolloProvider>

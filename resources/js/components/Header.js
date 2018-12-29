@@ -20,8 +20,13 @@ const Header = props => {
             </Link>
           </li>
           <li className="mr-12">
-            <Link to="/fields" className="text-grey-darkest no-underline">
-              Fields
+            <Link to="/fieldtypes" className="text-grey-darkest no-underline">
+              Field types
+            </Link>
+          </li>
+          <li className="mr-12">
+            <Link to="/modules" className="text-grey-darkest no-underline">
+              Modules
             </Link>
           </li>
         </ul>
