@@ -102,6 +102,16 @@ export const GET_FIELD_TYPES_BY_CMS = gql`
   }
 `;
 
+export const GET_FIELD_TYPES_FOR_CMS = gql`
+  query FieldTypesForCms($cms_id: ID!){
+    fieldTypesForCms(cms_id: $cms_id) {
+      id
+      name
+      group
+    }
+  }
+`;
+
 export const CREATE_FIELD_TYPE = gql`
   mutation CreateFieldType(
     $name: String!

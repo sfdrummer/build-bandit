@@ -99417,7 +99417,7 @@ var FieldTypesList = function FieldTypesList(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "w-full max-w-md"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+    className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
     className: "text-grey-darker text-xxl font-normal mb-4"
   }, "Field types"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("hr", {
@@ -99662,7 +99662,7 @@ var FieldTypesForm = function FieldTypesForm(props) {
   }, function (createFieldType, _ref8) {
     var data = _ref8.data;
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
-      className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+      className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4",
       onSubmit: function onSubmit(event) {
         event.preventDefault();
         createFieldType({
@@ -99803,7 +99803,7 @@ var ModuleList = function ModuleList(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "w-full max-w-md"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+    className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
     className: "text-grey-darker text-xxl font-normal mb-4"
   }, "Modules"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("hr", {
@@ -99891,7 +99891,7 @@ var ModuleForm = function ModuleForm(props) {
   }, function (createModule, _ref5) {
     var data = _ref5.data;
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
-      className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+      className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4",
       onSubmit: function onSubmit(event) {
         event.preventDefault();
         createModule({
@@ -99986,7 +99986,7 @@ var ProjectList = function ProjectList(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "w-full max-w-md"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+    className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
     className: "text-grey-darker text-xxl font-normal mb-4"
   }, "Projects"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("hr", {
@@ -100042,7 +100042,7 @@ var ProjectForm = function ProjectForm(props) {
   }, function (createProject, _ref4) {
     var data = _ref4.data;
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
-      className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+      className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4",
       onSubmit: function onSubmit(event) {
         event.preventDefault();
         createProject({
@@ -100150,7 +100150,7 @@ var TypeList = function TypeList(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "w-full max-w-md"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+    className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
     className: "text-grey-darker text-xxl font-normal mb-4"
   }, "Types"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("hr", {
@@ -100238,7 +100238,7 @@ var TypeForm = function TypeForm(props) {
   }, function (createType, _ref6) {
     var data = _ref6.data;
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
-      className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+      className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4",
       onSubmit: function onSubmit(event) {
         event.preventDefault();
         createType({
@@ -100477,7 +100477,9 @@ var TypeInstanceList = function TypeInstanceList(props) {
     return data.typeInstancesForProjectType.map(function (instance, index) {
       return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(TypeInstance, {
         instance: instance,
-        key: "instance-".concat(instance.id)
+        key: "instance-".concat(instance.id),
+        type: props.type,
+        project: props.project
       });
     });
   });
@@ -100486,10 +100488,69 @@ var TypeInstanceList = function TypeInstanceList(props) {
 var TypeInstance = function TypeInstance(props) {
   var instance = props.instance;
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "w-full bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+    className: "w-full bg-white shadow rounded px-8 pt-6 pb-8 mb-8"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
     className: "text-4xl text-grey-dark mb-4"
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("em", null, instance.name)));
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("em", null, instance.name)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(CreateFieldInstanceForm, props));
+};
+
+var CreateFieldInstanceForm = function CreateFieldInstanceForm(props) {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
+    className: "border-t py-4"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h3", {
+    className: "text-sm uppercase mb-4"
+  }, "Create new field"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "flex"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+    type: "text",
+    placeholder: "Field name",
+    name: "name",
+    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+    type: "text",
+    placeholder: "Machine name",
+    name: "machine_name",
+    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("select", {
+    type: "text",
+    name: "field_type",
+    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+    value: ""
+  }, "Field type"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["GET_FIELD_TYPES_FOR_CMS"],
+    variables: {
+      cms_id: props.project.cms.id
+    }
+  }, function (_ref5) {
+    var data = _ref5.data,
+        loading = _ref5.loading,
+        error = _ref5.error;
+    if (loading) return null;
+    if (error) return null;
+
+    var groupedTypes = _.groupBy(data.fieldTypesForCms, "group");
+
+    return Object.keys(groupedTypes).map(function (key, index) {
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("optgroup", {
+        label: key
+      }, groupedTypes[key].map(function (item) {
+        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+          value: item.id
+        }, item.name);
+      }));
+    });
+  })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+    type: "text",
+    placeholder: "Group",
+    name: "group",
+    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+    type: "text",
+    placeholder: "Description",
+    name: "description",
+    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  })));
 };
 
 var CreateTypeInstanceForm = function CreateTypeInstanceForm(props) {
@@ -100510,10 +100571,10 @@ var CreateTypeInstanceForm = function CreateTypeInstanceForm(props) {
       }
     }],
     onCompleted: props.toggleCreateOpen
-  }, function (createTypeInstance, _ref5) {
-    var data = _ref5.data;
+  }, function (createTypeInstance, _ref6) {
+    var data = _ref6.data;
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
-      className: "bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+      className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4",
       onSubmit: function onSubmit(event) {
         event.preventDefault();
         createTypeInstance({
@@ -100625,7 +100686,7 @@ var ProjectHeader = function ProjectHeader(_ref) {
 /*!*****************************************!*\
   !*** ./resources/js/queries/queries.js ***!
   \*****************************************/
-/*! exports provided: GET_PROJECTS, GET_PROJECT_BY_ID, CREATE_PROJECT, GET_SYSTEMS, GET_TYPES_BY_CMS, GET_TYPES_FOR_CMS, CREATE_TYPE, DELETE_TYPE, GET_FIELD_TYPES_BY_CMS, CREATE_FIELD_TYPE, UPDATE_FIELD_TYPE, DELETE_FIELD_TYPE, GET_MODULES_BY_CMS, CREATE_MODULE, DELETE_MODULE, GET_INSTANCES_FOR_PROJECT_TYPE, CREATE_TYPE_INSTANCE */
+/*! exports provided: GET_PROJECTS, GET_PROJECT_BY_ID, CREATE_PROJECT, GET_SYSTEMS, GET_TYPES_BY_CMS, GET_TYPES_FOR_CMS, CREATE_TYPE, DELETE_TYPE, GET_FIELD_TYPES_BY_CMS, GET_FIELD_TYPES_FOR_CMS, CREATE_FIELD_TYPE, UPDATE_FIELD_TYPE, DELETE_FIELD_TYPE, GET_MODULES_BY_CMS, CREATE_MODULE, DELETE_MODULE, GET_INSTANCES_FOR_PROJECT_TYPE, CREATE_TYPE_INSTANCE */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -100639,6 +100700,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CREATE_TYPE", function() { return CREATE_TYPE; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DELETE_TYPE", function() { return DELETE_TYPE; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_FIELD_TYPES_BY_CMS", function() { return GET_FIELD_TYPES_BY_CMS; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_FIELD_TYPES_FOR_CMS", function() { return GET_FIELD_TYPES_FOR_CMS; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CREATE_FIELD_TYPE", function() { return CREATE_FIELD_TYPE; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "UPDATE_FIELD_TYPE", function() { return UPDATE_FIELD_TYPE; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DELETE_FIELD_TYPE", function() { return DELETE_FIELD_TYPE; });
@@ -100649,8 +100711,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CREATE_TYPE_INSTANCE", function() { return CREATE_TYPE_INSTANCE; });
 /* harmony import */ var graphql_tag__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! graphql-tag */ "./node_modules/graphql-tag/src/index.js");
 /* harmony import */ var graphql_tag__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(graphql_tag__WEBPACK_IMPORTED_MODULE_0__);
-function _templateObject17() {
+function _templateObject18() {
   var data = _taggedTemplateLiteral(["\n  mutation CreateTypeInstance(\n    $name: String!\n    $machine_name: String!\n    $description: String\n    $options: String\n    $type_id: ID!\n    $project_id: ID!\n  ) {\n    createTypeInstance(\n      name: $name\n      machine_name: $machine_name\n      description: $description\n      options: $options\n      type_id: $type_id\n      project_id: $project_id\n    ) {\n      id\n      name\n      description\n      options\n      type_id\n      project_id\n    }\n  }\n"]);
+
+  _templateObject18 = function _templateObject18() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject17() {
+  var data = _taggedTemplateLiteral(["\n  query TypeInstancesForProjectType($type_id: ID!, $project_id: ID!){\n    typeInstancesForProjectType(type_id: $type_id, project_id: $project_id) {\n      id\n      name\n      machine_name\n      description\n      options\n      type_id\n      project_id\n    }\n  }\n"]);
 
   _templateObject17 = function _templateObject17() {
     return data;
@@ -100660,7 +100732,7 @@ function _templateObject17() {
 }
 
 function _templateObject16() {
-  var data = _taggedTemplateLiteral(["\n  query TypeInstancesForProjectType($type_id: ID!, $project_id: ID!){\n    typeInstancesForProjectType(type_id: $type_id, project_id: $project_id) {\n      id\n      name\n      machine_name\n      description\n      options\n      type_id\n      project_id\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  mutation DeleteModule($id: ID!) {\n    deleteModule(id: $id) {\n      id\n      name\n    }\n  }\n"]);
 
   _templateObject16 = function _templateObject16() {
     return data;
@@ -100670,7 +100742,7 @@ function _templateObject16() {
 }
 
 function _templateObject15() {
-  var data = _taggedTemplateLiteral(["\n  mutation DeleteModule($id: ID!) {\n    deleteModule(id: $id) {\n      id\n      name\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  mutation CreateModule($name: String!, $cms_id: ID!) {\n    createModule(name: $name, cms_id: $cms_id) {\n      id\n      name\n    }\n  }\n"]);
 
   _templateObject15 = function _templateObject15() {
     return data;
@@ -100680,7 +100752,7 @@ function _templateObject15() {
 }
 
 function _templateObject14() {
-  var data = _taggedTemplateLiteral(["\n  mutation CreateModule($name: String!, $cms_id: ID!) {\n    createModule(name: $name, cms_id: $cms_id) {\n      id\n      name\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  {\n    systems {\n      id\n      name\n      modules {\n        id\n        name\n      }\n    }\n  }\n"]);
 
   _templateObject14 = function _templateObject14() {
     return data;
@@ -100690,7 +100762,7 @@ function _templateObject14() {
 }
 
 function _templateObject13() {
-  var data = _taggedTemplateLiteral(["\n  {\n    systems {\n      id\n      name\n      modules {\n        id\n        name\n      }\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  mutation DeleteFieldType($id: ID!) {\n    deleteFieldType(id: $id) {\n      id\n      name\n      group\n    }\n  }\n"]);
 
   _templateObject13 = function _templateObject13() {
     return data;
@@ -100700,7 +100772,7 @@ function _templateObject13() {
 }
 
 function _templateObject12() {
-  var data = _taggedTemplateLiteral(["\n  mutation DeleteFieldType($id: ID!) {\n    deleteFieldType(id: $id) {\n      id\n      name\n      group\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  mutation UpdateFieldType(\n    $id: ID!\n    $name: String!\n    $group: String\n    $module_id: ID\n  ) {\n    updateFieldType(\n      id: $id\n      name: $name\n      group: $group\n      module_id: $module_id\n    ) {\n      id\n      name\n      group\n      module_id\n    }\n  }\n"]);
 
   _templateObject12 = function _templateObject12() {
     return data;
@@ -100710,7 +100782,7 @@ function _templateObject12() {
 }
 
 function _templateObject11() {
-  var data = _taggedTemplateLiteral(["\n  mutation UpdateFieldType(\n    $id: ID!\n    $name: String!\n    $group: String\n    $module_id: ID\n  ) {\n    updateFieldType(\n      id: $id\n      name: $name\n      group: $group\n      module_id: $module_id\n    ) {\n      id\n      name\n      group\n      module_id\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  mutation CreateFieldType(\n    $name: String!\n    $cms_id: ID!\n    $group: String\n    $module_id: ID\n  ) {\n    createFieldType(\n      name: $name\n      cms_id: $cms_id\n      group: $group\n      module_id: $module_id\n    ) {\n      id\n      name\n      group\n    }\n  }\n"]);
 
   _templateObject11 = function _templateObject11() {
     return data;
@@ -100720,7 +100792,7 @@ function _templateObject11() {
 }
 
 function _templateObject10() {
-  var data = _taggedTemplateLiteral(["\n  mutation CreateFieldType(\n    $name: String!\n    $cms_id: ID!\n    $group: String\n    $module_id: ID\n  ) {\n    createFieldType(\n      name: $name\n      cms_id: $cms_id\n      group: $group\n      module_id: $module_id\n    ) {\n      id\n      name\n      group\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  query FieldTypesForCms($cms_id: ID!){\n    fieldTypesForCms(cms_id: $cms_id) {\n      id\n      name\n      group\n    }\n  }\n"]);
 
   _templateObject10 = function _templateObject10() {
     return data;
@@ -100831,14 +100903,15 @@ var GET_TYPES_FOR_CMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_temp
 var CREATE_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject7());
 var DELETE_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject8());
 var GET_FIELD_TYPES_BY_CMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject9());
-var CREATE_FIELD_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject10());
-var UPDATE_FIELD_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject11());
-var DELETE_FIELD_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject12());
-var GET_MODULES_BY_CMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject13());
-var CREATE_MODULE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject14());
-var DELETE_MODULE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject15());
-var GET_INSTANCES_FOR_PROJECT_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject16());
-var CREATE_TYPE_INSTANCE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject17());
+var GET_FIELD_TYPES_FOR_CMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject10());
+var CREATE_FIELD_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject11());
+var UPDATE_FIELD_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject12());
+var DELETE_FIELD_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject13());
+var GET_MODULES_BY_CMS = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject14());
+var CREATE_MODULE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject15());
+var DELETE_MODULE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject16());
+var GET_INSTANCES_FOR_PROJECT_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject17());
+var CREATE_TYPE_INSTANCE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject18());
 
 /***/ }),
 

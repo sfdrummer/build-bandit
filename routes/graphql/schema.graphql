@@ -17,6 +17,7 @@ type Query {
     projectById(id: ID! @eq): Project @find
     fieldTypes: [FieldType!] @all
     fieldTypeById(id: ID! @eq): FieldType @find
+    fieldTypesForCms(cms_id: ID! @eq): [FieldType!]! @all(model: "App\\FieldType")
     modules: [Module!] @all
     moduleById(id: ID! @eq): Module @find
     typeInstancesForProjectType(

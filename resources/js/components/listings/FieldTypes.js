@@ -14,7 +14,7 @@ const FieldTypes = props => {
 const FieldTypesList = props => {
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+      <div className="bg-white shadow rounded px-8 pt-6 pb-8 mb-4">
         <h2 className="text-grey-darker text-xxl font-normal mb-4">
           Field types
         </h2>
@@ -241,7 +241,7 @@ const FieldTypesForm = props => {
       >
         {(createFieldType, { data }) => (
           <form
-            className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+            className="bg-white shadow rounded px-8 pt-6 pb-8 mb-4"
             onSubmit={event => {
               event.preventDefault();
               createFieldType({

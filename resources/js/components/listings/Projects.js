@@ -15,7 +15,7 @@ const Projects = props => {
 const ProjectList = props => {
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+      <div className="bg-white shadow rounded px-8 pt-6 pb-8 mb-4">
         <h2 className="text-grey-darker text-xxl font-normal mb-4">Projects</h2>
         <hr className="border-b my-4" />
         <Query query={queries.GET_PROJECTS}>
@@ -65,7 +65,7 @@ const ProjectForm = props => {
       >
         {(createProject, { data }) => (
           <form
-            className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+            className="bg-white shadow rounded px-8 pt-6 pb-8 mb-4"
             onSubmit={event => {
               event.preventDefault();
               createProject({

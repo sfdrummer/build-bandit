@@ -106,7 +106,12 @@ const TypeInstanceList = props => {
         if (error) return <p>Error&hellip;</p>;
 
         return data.typeInstancesForProjectType.map((instance, index) => (
-          <TypeInstance instance={instance} key={`instance-${instance.id}`} />
+          <TypeInstance
+            instance={instance}
+            key={`instance-${instance.id}`}
+            type={props.type}
+            project={props.project}
+          />
         ));
       }}
     </Query>
@@ -116,11 +121,71 @@ const TypeInstanceList = props => {
 const TypeInstance = props => {
   const { instance } = props;
   return (
-    <div className="w-full bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+    <div className="w-full bg-white shadow rounded px-8 pt-6 pb-8 mb-8">
       <h2 className="text-4xl text-grey-dark mb-4">
         <em>{instance.name}</em>
       </h2>
+      <CreateFieldInstanceForm {...props} />
     </div>
+  );
+};
+
+const CreateFieldInstanceForm = props => {
+  return (
+    <form className="border-t py-4">
+      <h3 className="text-sm uppercase mb-4">Create new field</h3>
+      <div className="flex">
+        <input
+          type="text"
+          placeholder="Field name"
+          name="name"
+          className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+        />
+        <input
+          type="text"
+          placeholder="Machine name"
+          name="machine_name"
+          className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+        />
+        <select
+          type="text"
+          name="field_type"
+          className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+        >
+          <option value="">Field type</option>
+          <Query
+            query={queries.GET_FIELD_TYPES_FOR_CMS}
+            variables={{ cms_id: props.project.cms.id }}
+          >
+            {({ data, loading, error }) => {
+              if (loading) return null;
+              if (error) return null;
+
+              const groupedTypes = _.groupBy(data.fieldTypesForCms, "group");
+              return Object.keys(groupedTypes).map((key, index) => (
+                <optgroup label={key}>
+                  {groupedTypes[key].map(item => (
+                    <option value={item.id}>{item.name}</option>
+                  ))}
+                </optgroup>
+              ));
+            }}
+          </Query>
+        </select>
+        <input
+          type="text"
+          placeholder="Group"
+          name="group"
+          className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+        />
+        <input
+          type="text"
+          placeholder="Description"
+          name="description"
+          className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+        />
+      </div>
+    </form>
   );
 };
 
@@ -145,7 +210,7 @@ const CreateTypeInstanceForm = props => {
       >
         {(createTypeInstance, { data }) => (
           <form
-            className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+            className="bg-white shadow rounded px-8 pt-6 pb-8 mb-4"
             onSubmit={event => {
               event.preventDefault();
               createTypeInstance({
