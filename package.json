@@ -30,6 +30,7 @@
     "dependencies": {
         "@babel/plugin-proposal-class-properties": "^7.2.3",
         "apollo-boost": "^0.1.23",
+        "formik": "^1.4.1",
         "graphql": "^14.0.2",
         "pluralize": "^7.0.0",
         "react-apollo": "^2.3.3",
