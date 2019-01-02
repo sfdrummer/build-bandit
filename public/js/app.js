@@ -106944,11 +106944,17 @@ var ProjectForm = function ProjectForm(props) {
         cms_id: ""
       },
       onSubmit: function onSubmit(values, _ref5) {
-        var setSubmitting = _ref5.setSubmitting;
+        var setSubmitting = _ref5.setSubmitting,
+            setValues = _ref5.setValues;
         createProject({
           variables: values
+        }).then(function (response) {
+          setValues({
+            name: "",
+            description: ""
+          });
+          setSubmitting(false);
         });
-        setSubmitting(false);
       }
     });
   }));
@@ -107143,7 +107149,7 @@ var TypeForm = function TypeForm(props) {
 /*!************************************************!*\
   !*** ./resources/js/components/misc/fields.js ***!
   \************************************************/
-/*! exports provided: TextInputField, TextAreaField, CmsSelectField */
+/*! exports provided: TextInputField, TextAreaField, CmsSelectField, InlineTextInputField, InlineCmsFieldsField */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -107151,6 +107157,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TextInputField", function() { return TextInputField; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TextAreaField", function() { return TextAreaField; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CmsSelectField", function() { return CmsSelectField; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "InlineTextInputField", function() { return InlineTextInputField; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "InlineCmsFieldsField", function() { return InlineCmsFieldsField; });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var react_apollo__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-apollo */ "./node_modules/react-apollo/react-apollo.browser.umd.js");
@@ -107241,6 +107249,60 @@ var CmsSelectField = function CmsSelectField(_ref3) {
     }));
   }));
 };
+var InlineTextInputField = function InlineTextInputField(_ref5) {
+  var field = _ref5.field,
+      _ref5$form = _ref5.form,
+      touched = _ref5$form.touched,
+      errors = _ref5$form.errors,
+      props = _objectWithoutProperties(_ref5, ["field", "form"]);
+
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", _extends({
+    type: "text",
+    placeholder: props.placeholder
+  }, field, props, {
+    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  }));
+};
+var InlineCmsFieldsField = function InlineCmsFieldsField(_ref6) {
+  var field = _ref6.field,
+      _ref6$form = _ref6.form,
+      touched = _ref6$form.touched,
+      errors = _ref6$form.errors,
+      props = _objectWithoutProperties(_ref6, ["field", "form"]);
+
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("select", _extends({
+    name: props.name
+  }, field, props, {
+    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+    value: ""
+  }, "Field type"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_2__["GET_FIELD_TYPES_FOR_CMS"],
+    variables: {
+      cms_id: props.cms.id
+    }
+  }, function (_ref7) {
+    var data = _ref7.data,
+        loading = _ref7.loading,
+        error = _ref7.error;
+    if (loading) return null;
+    if (error) return null;
+
+    var groupedTypes = _.groupBy(data.fieldTypesForCms, "group");
+
+    return Object.keys(groupedTypes).map(function (key, index) {
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("optgroup", {
+        label: key,
+        key: "optgroup-".concat(index)
+      }, groupedTypes[key].map(function (item) {
+        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
+          value: item.id,
+          key: "opt-".concat(item.id)
+        }, item.name);
+      }));
+    });
+  }));
+};
 
 /***/ }),
 
@@ -107276,17 +107338,20 @@ var CreateProjectForm = function CreateProjectForm(_ref) {
     name: "name",
     placeholder: "A cool project",
     label: "Project name",
-    component: _fields__WEBPACK_IMPORTED_MODULE_2__["TextInputField"]
+    component: _fields__WEBPACK_IMPORTED_MODULE_2__["TextInputField"],
+    value: values.name
   }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_1__["Field"], {
     type: "textarea",
     name: "description",
     placeholder: "This project will be well planned and go without a hitch...",
     label: "Description",
-    component: _fields__WEBPACK_IMPORTED_MODULE_2__["TextAreaField"]
+    component: _fields__WEBPACK_IMPORTED_MODULE_2__["TextAreaField"],
+    value: values.description
   }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_1__["Field"], {
     name: "cms_id",
     label: "Project CMS",
-    component: _fields__WEBPACK_IMPORTED_MODULE_2__["CmsSelectField"]
+    component: _fields__WEBPACK_IMPORTED_MODULE_2__["CmsSelectField"],
+    value: values.cms_id
   }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "flex items-center justify-between"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
@@ -107314,8 +107379,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var slugify__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(slugify__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var pluralize__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! pluralize */ "./node_modules/pluralize/pluralize.js");
 /* harmony import */ var pluralize__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(pluralize__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var _queries_queries__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../queries/queries */ "./resources/js/queries/queries.js");
-/* harmony import */ var _ProjectHeader__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./ProjectHeader */ "./resources/js/components/project/ProjectHeader.js");
+/* harmony import */ var formik__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! formik */ "./node_modules/formik/dist/formik.esm.js");
+/* harmony import */ var _misc_fields__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../misc/fields */ "./resources/js/components/misc/fields.js");
+/* harmony import */ var _queries_queries__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../queries/queries */ "./resources/js/queries/queries.js");
+/* harmony import */ var _ProjectHeader__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./ProjectHeader */ "./resources/js/components/project/ProjectHeader.js");
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -107343,9 +107414,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 
+
+
 var Project = function Project(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react__WEBPACK_IMPORTED_MODULE_0__["Fragment"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
-    query: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["GET_PROJECT_BY_ID"],
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_6__["GET_PROJECT_BY_ID"],
     variables: {
       id: props.match.params.id
     }
@@ -107363,7 +107436,7 @@ var Project = function Project(props) {
 
 var ProjectWorkspace = function ProjectWorkspace(_ref2) {
   var project = _ref2.project;
-  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react__WEBPACK_IMPORTED_MODULE_0__["Fragment"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_ProjectHeader__WEBPACK_IMPORTED_MODULE_5__["default"], {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react__WEBPACK_IMPORTED_MODULE_0__["Fragment"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_ProjectHeader__WEBPACK_IMPORTED_MODULE_7__["default"], {
     project: project
   }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ProjectTypes, {
     project: project
@@ -107374,7 +107447,7 @@ var ProjectTypes = function ProjectTypes(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "py-4 px-8 mt-16"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
-    query: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["GET_TYPES_FOR_CMS"],
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_6__["GET_TYPES_FOR_CMS"],
     variables: {
       cms_id: props.project.cms.id
     }
@@ -107457,7 +107530,7 @@ function (_PureComponent) {
 
 var TypeInstanceList = function TypeInstanceList(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
-    query: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["GET_INSTANCES_FOR_PROJECT_TYPE"],
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_6__["GET_INSTANCES_FOR_PROJECT_TYPE"],
     variables: {
       type_id: props.type.id,
       project_id: props.project.id
@@ -107485,66 +107558,178 @@ var TypeInstance = function TypeInstance(props) {
     className: "w-full bg-white shadow rounded px-8 pt-6 pb-8 mb-8"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
     className: "text-4xl text-grey-dark mb-4"
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("em", null, instance.name)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(CreateFieldInstanceForm, props));
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("em", null, instance.name)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldInstanceList, props), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(CreateFieldInstanceWrapper, props));
 };
 
-var CreateFieldInstanceForm = function CreateFieldInstanceForm(props) {
-  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
-    className: "border-t py-4"
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h3", {
-    className: "text-sm uppercase mb-4"
-  }, "Create new field"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "flex"
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
-    type: "text",
-    placeholder: "Field name",
-    name: "name",
-    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
-  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
-    type: "text",
-    placeholder: "Machine name",
-    name: "machine_name",
-    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
-  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("select", {
-    type: "text",
-    name: "field_type",
-    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
-    value: ""
-  }, "Field type"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
-    query: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["GET_FIELD_TYPES_FOR_CMS"],
+var FieldInstanceList = function FieldInstanceList(props) {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("table", {
+    className: "table-auto w-full mb-8"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("thead", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("tr", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
+    className: "text-left py-4"
+  }, "Field type"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
+    className: "text-left py-4"
+  }, "Field name"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
+    className: "text-left py-4"
+  }, "Machine name"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
+    className: "text-left py-4"
+  }, "Group"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
+    className: "text-left py-4"
+  }, "Description"))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("tbody", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_6__["GET_FIELD_INSTANCES_FOR_TYPE_IN_PROJECT"],
     variables: {
-      cms_id: props.project.cms.id
+      type_instance_id: props.instance.id,
+      project_id: props.project.id
     }
   }, function (_ref5) {
     var data = _ref5.data,
         loading = _ref5.loading,
         error = _ref5.error;
-    if (loading) return null;
-    if (error) return null;
-
-    var groupedTypes = _.groupBy(data.fieldTypesForCms, "group");
-
-    return Object.keys(groupedTypes).map(function (key, index) {
-      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("optgroup", {
-        label: key
-      }, groupedTypes[key].map(function (item) {
-        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("option", {
-          value: item.id
-        }, item.name);
-      }));
+    if (loading) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Loading fields\u2026");
+    if (error) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Error loading fields!");
+    console.log(data);
+    return data.fieldInstancesForTypeInProject.map(function (fieldInstance, index) {
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldInstance, {
+        fieldInstance: fieldInstance,
+        project: props.project,
+        key: "fieldInstance-".concat(fieldInstance.id)
+      });
     });
-  })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+  })));
+};
+
+var FieldInstance = function FieldInstance(_ref6) {
+  var fieldInstance = _ref6.fieldInstance,
+      project = _ref6.project;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("tr", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Query"], {
+    query: _queries_queries__WEBPACK_IMPORTED_MODULE_6__["GET_FIELD_TYPES_FOR_CMS"],
+    variables: {
+      cms_id: project.cms.id
+    }
+  }, function (_ref7) {
+    var data = _ref7.data,
+        loading = _ref7.loading,
+        error = _ref7.error;
+    if (loading || error) return null;
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", {
+      className: "py-2"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
+      className: "bg-green-light py-1 px-2 rounded mr-4 text-white uppercase"
+    }, _.find(data.fieldTypesForCms, ["id", fieldInstance.field_id]).name));
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", {
+    className: "py-2"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("strong", null, fieldInstance.name)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", {
+    className: "py-2"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", null, fieldInstance.machine_name)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", {
+    className: "py-2"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", null, fieldInstance.group)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", {
+    className: "py-2"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", null, fieldInstance.description)));
+};
+
+var CreateFieldInstanceWrapper = function CreateFieldInstanceWrapper(props) {
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Mutation"], {
+    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_6__["CREATE_FIELD_INSTANCE"],
+    refetchQueries: [{
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_6__["GET_FIELD_INSTANCES_FOR_TYPE_IN_PROJECT"],
+      variables: {
+        project_id: props.project.id,
+        type_instance_id: props.instance.id
+      }
+    }]
+  }, function (createFieldInstance, _ref8) {
+    var data = _ref8.data;
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_4__["Formik"], {
+      enableReinitialize: true,
+      onSubmit: function onSubmit(values, _ref9) {
+        var setSubmitting = _ref9.setSubmitting,
+            setValues = _ref9.setValues;
+        createFieldInstance({
+          variables: _objectSpread({}, values, {
+            project_id: props.project.id,
+            type_instance_id: props.instance.id
+          })
+        }).then(function (response) {
+          setValues({
+            name: "",
+            description: "",
+            machine_name: ""
+          });
+          setSubmitting(false);
+        });
+      },
+      render: function render(formikProps) {
+        return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldInstanceForm, _extends({}, formikProps, props));
+      }
+    });
+  });
+};
+
+var FieldInstanceForm = function FieldInstanceForm(_ref10) {
+  var values = _ref10.values,
+      errors = _ref10.errors,
+      isSubmitting = _ref10.isSubmitting,
+      handleSubmit = _ref10.handleSubmit,
+      handleChange = _ref10.handleChange,
+      handleBlur = _ref10.handleBlur,
+      setFieldTouched = _ref10.setFieldTouched,
+      project = _ref10.project;
+  var name;
+  var machine_name;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_4__["Form"], {
+    className: "border-t py-4",
+    onSubmit: function onSubmit(event) {
+      event.preventDefault();
+      name.focus();
+      handleSubmit();
+    }
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h3", {
+    className: "text-sm uppercase mb-4"
+  }, "Create new field"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "flex"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+    placeholder: "Field name",
+    name: "name",
+    type: "text",
+    onChange: handleChange,
+    onBlur: handleBlur,
+    value: values.name,
+    ref: function ref(node) {
+      return name = node;
+    },
+    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+    placeholder: "machine_name",
+    name: "machine_name",
+    type: "text",
+    onChange: handleChange,
+    onBlur: handleBlur,
+    value: values.machine_name,
+    ref: function ref(node) {
+      return machine_name = node;
+    },
+    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_4__["Field"], {
+    type: "select",
+    name: "field_id",
+    component: _misc_fields__WEBPACK_IMPORTED_MODULE_5__["InlineCmsFieldsField"],
+    value: values.field_id,
+    cms: project.cms
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_4__["Field"], {
     type: "text",
     placeholder: "Group",
     name: "group",
-    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
-  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+    component: _misc_fields__WEBPACK_IMPORTED_MODULE_5__["InlineTextInputField"],
+    value: values.group
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_4__["Field"], {
     type: "text",
-    placeholder: "Description",
+    placeholder: "Field description",
     name: "description",
-    className: "mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
-  })));
+    component: _misc_fields__WEBPACK_IMPORTED_MODULE_5__["InlineTextInputField"],
+    value: values.description
+  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+    className: "bg-blue mb-1 hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline",
+    type: "submit"
+  }, "Create")));
 };
 
 var CreateTypeInstanceForm = function CreateTypeInstanceForm(props) {
@@ -107556,17 +107741,17 @@ var CreateTypeInstanceForm = function CreateTypeInstanceForm(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "w-full"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_1__["Mutation"], {
-    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["CREATE_TYPE_INSTANCE"],
+    mutation: _queries_queries__WEBPACK_IMPORTED_MODULE_6__["CREATE_TYPE_INSTANCE"],
     refetchQueries: [{
-      query: _queries_queries__WEBPACK_IMPORTED_MODULE_4__["GET_INSTANCES_FOR_PROJECT_TYPE"],
+      query: _queries_queries__WEBPACK_IMPORTED_MODULE_6__["GET_INSTANCES_FOR_PROJECT_TYPE"],
       variables: {
         project_id: project.id,
         type_id: type.id
       }
     }],
     onCompleted: props.toggleCreateOpen
-  }, function (createTypeInstance, _ref6) {
-    var data = _ref6.data;
+  }, function (createTypeInstance, _ref11) {
+    var data = _ref11.data;
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
       className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4",
       onSubmit: function onSubmit(event) {
@@ -107680,7 +107865,7 @@ var ProjectHeader = function ProjectHeader(_ref) {
 /*!*****************************************!*\
   !*** ./resources/js/queries/queries.js ***!
   \*****************************************/
-/*! exports provided: GET_PROJECTS, GET_PROJECT_BY_ID, CREATE_PROJECT, GET_SYSTEMS, GET_TYPES_BY_CMS, GET_TYPES_FOR_CMS, CREATE_TYPE, DELETE_TYPE, GET_FIELD_TYPES_BY_CMS, GET_FIELD_TYPES_FOR_CMS, CREATE_FIELD_TYPE, UPDATE_FIELD_TYPE, DELETE_FIELD_TYPE, GET_MODULES_BY_CMS, CREATE_MODULE, DELETE_MODULE, GET_INSTANCES_FOR_PROJECT_TYPE, CREATE_TYPE_INSTANCE */
+/*! exports provided: GET_PROJECTS, GET_PROJECT_BY_ID, CREATE_PROJECT, GET_SYSTEMS, GET_TYPES_BY_CMS, GET_TYPES_FOR_CMS, CREATE_TYPE, DELETE_TYPE, GET_FIELD_TYPES_BY_CMS, GET_FIELD_TYPES_FOR_CMS, CREATE_FIELD_TYPE, UPDATE_FIELD_TYPE, DELETE_FIELD_TYPE, GET_MODULES_BY_CMS, CREATE_MODULE, DELETE_MODULE, GET_INSTANCES_FOR_PROJECT_TYPE, CREATE_TYPE_INSTANCE, GET_FIELD_INSTANCES_FOR_TYPE_IN_PROJECT, CREATE_FIELD_INSTANCE */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -107703,8 +107888,30 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DELETE_MODULE", function() { return DELETE_MODULE; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_INSTANCES_FOR_PROJECT_TYPE", function() { return GET_INSTANCES_FOR_PROJECT_TYPE; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CREATE_TYPE_INSTANCE", function() { return CREATE_TYPE_INSTANCE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_FIELD_INSTANCES_FOR_TYPE_IN_PROJECT", function() { return GET_FIELD_INSTANCES_FOR_TYPE_IN_PROJECT; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CREATE_FIELD_INSTANCE", function() { return CREATE_FIELD_INSTANCE; });
 /* harmony import */ var graphql_tag__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! graphql-tag */ "./node_modules/graphql-tag/src/index.js");
 /* harmony import */ var graphql_tag__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(graphql_tag__WEBPACK_IMPORTED_MODULE_0__);
+function _templateObject20() {
+  var data = _taggedTemplateLiteral(["\n  mutation CreateFieldInstance(\n    $name: String!\n    $machine_name: String!\n    $description: String\n    $options: String\n    $group: String\n    $field_id: ID!\n    $weight: Int\n    $project_id: ID!\n    $type_instance_id: ID!\n  ) {\n    createFieldInstance(\n      name: $name\n      machine_name: $machine_name\n      description: $description\n      options: $options\n      group: $group\n      field_id: $field_id\n      weight: $weight\n      project_id: $project_id\n      type_instance_id: $type_instance_id\n    ) {\n      id\n      name\n      machine_name\n      group\n      description\n      options\n      field_id\n      project_id\n      type_instance_id\n    }\n  }\n"]);
+
+  _templateObject20 = function _templateObject20() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject19() {
+  var data = _taggedTemplateLiteral(["\n  query FieldInstancesForTypeInProject(\n    $type_instance_id: ID!\n    $project_id: ID!\n  ) {\n    fieldInstancesForTypeInProject(\n      type_instance_id: $type_instance_id\n      project_id: $project_id\n    ) {\n      id\n      name\n      machine_name\n      group\n      description\n      options\n      field_id\n      project_id\n      type_instance_id\n    }\n  }\n"]);
+
+  _templateObject19 = function _templateObject19() {
+    return data;
+  };
+
+  return data;
+}
+
 function _templateObject18() {
   var data = _taggedTemplateLiteral(["\n  mutation CreateTypeInstance(\n    $name: String!\n    $machine_name: String!\n    $description: String\n    $options: String\n    $type_id: ID!\n    $project_id: ID!\n  ) {\n    createTypeInstance(\n      name: $name\n      machine_name: $machine_name\n      description: $description\n      options: $options\n      type_id: $type_id\n      project_id: $project_id\n    ) {\n      id\n      name\n      description\n      options\n      type_id\n      project_id\n    }\n  }\n"]);
 
@@ -107716,7 +107923,7 @@ function _templateObject18() {
 }
 
 function _templateObject17() {
-  var data = _taggedTemplateLiteral(["\n  query TypeInstancesForProjectType($type_id: ID!, $project_id: ID!){\n    typeInstancesForProjectType(type_id: $type_id, project_id: $project_id) {\n      id\n      name\n      machine_name\n      description\n      options\n      type_id\n      project_id\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  query TypeInstancesForProjectType($type_id: ID!, $project_id: ID!) {\n    typeInstancesForProjectType(type_id: $type_id, project_id: $project_id) {\n      id\n      name\n      machine_name\n      description\n      options\n      type_id\n      project_id\n    }\n  }\n"]);
 
   _templateObject17 = function _templateObject17() {
     return data;
@@ -107786,7 +107993,7 @@ function _templateObject11() {
 }
 
 function _templateObject10() {
-  var data = _taggedTemplateLiteral(["\n  query FieldTypesForCms($cms_id: ID!){\n    fieldTypesForCms(cms_id: $cms_id) {\n      id\n      name\n      group\n    }\n  }\n"]);
+  var data = _taggedTemplateLiteral(["\n  query FieldTypesForCms($cms_id: ID!) {\n    fieldTypesForCms(cms_id: $cms_id) {\n      id\n      name\n      group\n    }\n  }\n"]);
 
   _templateObject10 = function _templateObject10() {
     return data;
@@ -107906,6 +108113,8 @@ var CREATE_MODULE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_template
 var DELETE_MODULE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject16());
 var GET_INSTANCES_FOR_PROJECT_TYPE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject17());
 var CREATE_TYPE_INSTANCE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject18());
+var GET_FIELD_INSTANCES_FOR_TYPE_IN_PROJECT = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject19());
+var CREATE_FIELD_INSTANCE = graphql_tag__WEBPACK_IMPORTED_MODULE_0___default()(_templateObject20());
 
 /***/ }),
 

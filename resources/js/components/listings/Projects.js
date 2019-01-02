@@ -66,11 +66,13 @@ const ProjectForm = props => {
             enableReinitialize
             component={forms.CreateProjectForm}
             initialValues={{ name: "", description: "", cms_id: "" }}
-            onSubmit={(values, { setSubmitting }) => {
+            onSubmit={(values, { setSubmitting, setValues }) => {
               createProject({
                 variables: values
+              }).then(response => {
+                setValues({name: "", description: ""});
+                setSubmitting(false);
               });
-              setSubmitting(false);
             }}
           />
         )}

@@ -86,3 +86,50 @@ export const CmsSelectField = ({
     </Query>
   </div>
 );
+
+export const InlineTextInputField = ({
+  field, // { name, value, onChange, onBlur }
+  form: { touched, errors }, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
+  ...props
+}) => (
+  <input
+    type="text"
+    placeholder={props.placeholder}
+    {...field}
+    {...props}
+    className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  />
+);
+
+export const InlineCmsFieldsField = ({
+  field, // { name, value, onChange, onBlur }
+  form: { touched, errors }, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
+  ...props
+}) => (
+  <select
+    name={props.name}
+    {...field}
+    {...props}
+    className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+  >
+    <option value="">Field type</option>
+    <Query
+      query={queries.GET_FIELD_TYPES_FOR_CMS}
+      variables={{ cms_id: props.cms.id }}
+    >
+      {({ data, loading, error }) => {
+        if (loading) return null;
+        if (error) return null;
+
+        const groupedTypes = _.groupBy(data.fieldTypesForCms, "group");
+        return Object.keys(groupedTypes).map((key, index) => (
+          <optgroup label={key} key={`optgroup-${index}`}>
+            {groupedTypes[key].map(item => (
+              <option value={item.id} key={`opt-${item.id}`}>{item.name}</option>
+            ))}
+          </optgroup>
+        ));
+      }}
+    </Query>
+  </select>
+);

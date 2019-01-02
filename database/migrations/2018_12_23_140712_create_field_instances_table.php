@@ -20,8 +20,10 @@ class CreateFieldInstancesTable extends Migration
             $table->string('group')->nullable();
             $table->text('description')->nullable();
             $table->text('options')->nullable();
-            $table->integer('field_id')->unsigned();
             $table->integer('weight')->default(0);
+            $table->integer('field_id')->unsigned();
+            $table->integer('project_id')->unsigned();
+            $table->integer('type_instance_id')->unsigned();
             $table->timestamps();
         });
     }

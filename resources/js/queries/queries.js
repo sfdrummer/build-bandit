@@ -103,7 +103,7 @@ export const GET_FIELD_TYPES_BY_CMS = gql`
 `;
 
 export const GET_FIELD_TYPES_FOR_CMS = gql`
-  query FieldTypesForCms($cms_id: ID!){
+  query FieldTypesForCms($cms_id: ID!) {
     fieldTypesForCms(cms_id: $cms_id) {
       id
       name
@@ -195,7 +195,7 @@ export const DELETE_MODULE = gql`
 `;
 
 export const GET_INSTANCES_FOR_PROJECT_TYPE = gql`
-  query TypeInstancesForProjectType($type_id: ID!, $project_id: ID!){
+  query TypeInstancesForProjectType($type_id: ID!, $project_id: ID!) {
     typeInstancesForProjectType(type_id: $type_id, project_id: $project_id) {
       id
       name
@@ -231,6 +231,64 @@ export const CREATE_TYPE_INSTANCE = gql`
       options
       type_id
       project_id
+    }
+  }
+`;
+
+export const GET_FIELD_INSTANCES_FOR_TYPE_IN_PROJECT = gql`
+  query FieldInstancesForTypeInProject(
+    $type_instance_id: ID!
+    $project_id: ID!
+  ) {
+    fieldInstancesForTypeInProject(
+      type_instance_id: $type_instance_id
+      project_id: $project_id
+    ) {
+      id
+      name
+      machine_name
+      group
+      description
+      options
+      field_id
+      project_id
+      type_instance_id
+    }
+  }
+`;
+
+export const CREATE_FIELD_INSTANCE = gql`
+  mutation CreateFieldInstance(
+    $name: String!
+    $machine_name: String!
+    $description: String
+    $options: String
+    $group: String
+    $field_id: ID!
+    $weight: Int
+    $project_id: ID!
+    $type_instance_id: ID!
+  ) {
+    createFieldInstance(
+      name: $name
+      machine_name: $machine_name
+      description: $description
+      options: $options
+      group: $group
+      field_id: $field_id
+      weight: $weight
+      project_id: $project_id
+      type_instance_id: $type_instance_id
+    ) {
+      id
+      name
+      machine_name
+      group
+      description
+      options
+      field_id
+      project_id
+      type_instance_id
     }
   }
 `;

@@ -22,6 +22,7 @@ export const CreateProjectForm = ({
         placeholder="A cool project"
         label="Project name"
         component={fields.TextInputField}
+        value={values.name}
       />
       <Field
         type="textarea"
@@ -29,8 +30,14 @@ export const CreateProjectForm = ({
         placeholder="This project will be well planned and go without a hitch..."
         label="Description"
         component={fields.TextAreaField}
+        value={values.description}
       />
-      <Field name="cms_id" label="Project CMS" component={fields.CmsSelectField} />
+      <Field
+        name="cms_id"
+        label="Project CMS"
+        component={fields.CmsSelectField}
+        value={values.cms_id}
+      />
       <div className="flex items-center justify-between">
         <button
           className="bg-blue hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline"

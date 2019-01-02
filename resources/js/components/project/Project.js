@@ -2,6 +2,8 @@ import React, { PureComponent, Fragment } from "react";
 import { Query, Mutation } from "react-apollo";
 import slugify from "slugify";
 import pluralize from "pluralize";
+import { Formik, Form, Field } from "formik";
+import * as fields from "../misc/fields";
 import * as queries from "../../queries/queries";
 import ProjectHeader from "./ProjectHeader";
 
@@ -125,67 +127,193 @@ const TypeInstance = props => {
       <h2 className="text-4xl text-grey-dark mb-4">
         <em>{instance.name}</em>
       </h2>
-      <CreateFieldInstanceForm {...props} />
+      <FieldInstanceList {...props} />
+      <CreateFieldInstanceWrapper {...props} />
     </div>
   );
 };
 
-const CreateFieldInstanceForm = props => {
+const FieldInstanceList = props => {
   return (
-    <form className="border-t py-4">
+    <table className="table-auto w-full mb-8">
+      <thead>
+        <tr>
+          <th className="text-left py-4">Field type</th>
+          <th className="text-left py-4">Field name</th>
+          <th className="text-left py-4">Machine name</th>
+          <th className="text-left py-4">Group</th>
+          <th className="text-left py-4">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <Query
+          query={queries.GET_FIELD_INSTANCES_FOR_TYPE_IN_PROJECT}
+          variables={{
+            type_instance_id: props.instance.id,
+            project_id: props.project.id
+          }}
+        >
+          {({ data, loading, error }) => {
+            if (loading) return <p>Loading fields&hellip;</p>;
+            if (error) return <p>Error loading fields!</p>;
+            console.log(data);
+            return data.fieldInstancesForTypeInProject.map(
+              (fieldInstance, index) => (
+                <FieldInstance
+                  fieldInstance={fieldInstance}
+                  project={props.project}
+                  key={`fieldInstance-${fieldInstance.id}`}
+                />
+              )
+            );
+          }}
+        </Query>
+      </tbody>
+    </table>
+  );
+};
+
+const FieldInstance = ({ fieldInstance, project }) => {
+  return (
+    <tr>
+      <Query
+        query={queries.GET_FIELD_TYPES_FOR_CMS}
+        variables={{ cms_id: project.cms.id }}
+      >
+        {({ data, loading, error }) => {
+          if (loading || error) return null;
+
+          return (
+            <td className="py-2">
+              <span className="bg-green-light py-1 px-2 rounded mr-4 text-white uppercase">
+                {
+                  _.find(data.fieldTypesForCms, ["id", fieldInstance.field_id])
+                    .name
+                }
+              </span>
+            </td>
+          );
+        }}
+      </Query>
+      <td className="py-2"><strong>{fieldInstance.name}</strong></td>
+      <td className="py-2"><span>{fieldInstance.machine_name}</span></td>
+      <td className="py-2"><span>{fieldInstance.group}</span></td>
+      <td className="py-2"><span>{fieldInstance.description}</span></td>
+    </tr>
+  );
+};
+
+const CreateFieldInstanceWrapper = props => {
+  return (
+    <Mutation
+      mutation={queries.CREATE_FIELD_INSTANCE}
+      refetchQueries={[
+        {
+          query: queries.GET_FIELD_INSTANCES_FOR_TYPE_IN_PROJECT,
+          variables: {
+            project_id: props.project.id,
+            type_instance_id: props.instance.id
+          }
+        }
+      ]}
+    >
+      {(createFieldInstance, { data }) => (
+        <Formik
+          enableReinitialize
+          onSubmit={(values, { setSubmitting, setValues }) => {
+            createFieldInstance({
+              variables: {
+                ...values,
+                project_id: props.project.id,
+                type_instance_id: props.instance.id
+              }
+            }).then(response => {
+              setValues({ name: "", description: "", machine_name: "" });
+              setSubmitting(false);
+            });
+          }}
+          render={formikProps => (
+            <FieldInstanceForm {...formikProps} {...props} />
+          )}
+        />
+      )}
+    </Mutation>
+  );
+};
+
+const FieldInstanceForm = ({
+  values,
+  errors,
+  isSubmitting,
+  handleSubmit,
+  handleChange,
+  handleBlur,
+  setFieldTouched,
+  project
+}) => {
+  let name;
+  let machine_name;
+
+  return (
+    <Form
+      className="border-t py-4"
+      onSubmit={event => {
+        event.preventDefault();
+        name.focus();
+        handleSubmit();
+      }}
+    >
       <h3 className="text-sm uppercase mb-4">Create new field</h3>
       <div className="flex">
         <input
-          type="text"
           placeholder="Field name"
           name="name"
+          type="text"
+          onChange={handleChange}
+          onBlur={handleBlur}
+          value={values.name}
+          ref={node => (name = node)}
           className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
         />
         <input
-          type="text"
-          placeholder="Machine name"
+          placeholder="machine_name"
           name="machine_name"
+          type="text"
+          onChange={handleChange}
+          onBlur={handleBlur}
+          value={values.machine_name}
+          ref={node => (machine_name = node)}
           className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
         />
-        <select
-          type="text"
-          name="field_type"
-          className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
-        >
-          <option value="">Field type</option>
-          <Query
-            query={queries.GET_FIELD_TYPES_FOR_CMS}
-            variables={{ cms_id: props.project.cms.id }}
-          >
-            {({ data, loading, error }) => {
-              if (loading) return null;
-              if (error) return null;
-
-              const groupedTypes = _.groupBy(data.fieldTypesForCms, "group");
-              return Object.keys(groupedTypes).map((key, index) => (
-                <optgroup label={key}>
-                  {groupedTypes[key].map(item => (
-                    <option value={item.id}>{item.name}</option>
-                  ))}
-                </optgroup>
-              ));
-            }}
-          </Query>
-        </select>
-        <input
+        <Field
+          type="select"
+          name="field_id"
+          component={fields.InlineCmsFieldsField}
+          value={values.field_id}
+          cms={project.cms}
+        />
+        <Field
           type="text"
           placeholder="Group"
           name="group"
-          className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+          component={fields.InlineTextInputField}
+          value={values.group}
         />
-        <input
+        <Field
           type="text"
-          placeholder="Description"
+          placeholder="Field description"
           name="description"
-          className="mr-4 appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+          component={fields.InlineTextInputField}
+          value={values.description}
         />
+        <button
+          className="bg-blue mb-1 hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          type="submit"
+        >
+          Create
+        </button>
       </div>
-    </form>
+    </Form>
   );
 };
 
