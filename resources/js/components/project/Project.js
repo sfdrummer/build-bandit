@@ -63,7 +63,10 @@ class ProjectType extends PureComponent {
     createOpen: false
   };
 
-  toggleCreateOpen = () => {
+  toggleCreateOpen = event => {
+    if (typeof event.preventDefault === "function") {
+      event.preventDefault();
+    }
     this.setState({ createOpen: !this.state.createOpen });
   };
 
@@ -123,11 +126,16 @@ const TypeInstanceList = props => {
 const TypeInstance = props => {
   const { instance } = props;
   return (
-    <div className="w-full bg-white shadow rounded px-8 pt-6 pb-8 mb-8">
-      <h2 className="text-4xl text-grey-dark mb-4">
-        <em>{instance.name}</em>
-      </h2>
-      <FieldInstanceList {...props} />
+    <div className="w-full bg-white shadow rounded mb-8">
+      <div className="p-4">
+        <h2 className="text-xl text-grey-dark mb-4">
+          <em>{instance.name}</em>
+        </h2>
+        <p className="text-sm text-grey-dark mb-2 pb-4 border-b">
+          <em>{instance.description}</em>
+        </p>
+        <FieldInstanceList {...props} />
+      </div>
       <CreateFieldInstanceWrapper {...props} />
     </div>
   );
@@ -135,7 +143,7 @@ const TypeInstance = props => {
 
 const FieldInstanceList = props => {
   return (
-    <table className="table-auto w-full mb-8">
+    <table className="table-auto w-full mb-8 text-sm">
       <thead>
         <tr>
           <th className="text-left py-4">Field type</th>
@@ -156,7 +164,6 @@ const FieldInstanceList = props => {
           {({ data, loading, error }) => {
             if (loading) return <p>Loading fields&hellip;</p>;
             if (error) return <p>Error loading fields!</p>;
-            console.log(data);
             return data.fieldInstancesForTypeInProject.map(
               (fieldInstance, index) => (
                 <FieldInstance
@@ -195,10 +202,18 @@ const FieldInstance = ({ fieldInstance, project }) => {
           );
         }}
       </Query>
-      <td className="py-2"><strong>{fieldInstance.name}</strong></td>
-      <td className="py-2"><span>{fieldInstance.machine_name}</span></td>
-      <td className="py-2"><span>{fieldInstance.group}</span></td>
-      <td className="py-2"><span>{fieldInstance.description}</span></td>
+      <td className="py-2">
+        <strong>{fieldInstance.name}</strong>
+      </td>
+      <td className="py-2">
+        <span>{fieldInstance.machine_name}</span>
+      </td>
+      <td className="py-2">
+        <span>{fieldInstance.group}</span>
+      </td>
+      <td className="py-2">
+        <span>{fieldInstance.description}</span>
+      </td>
     </tr>
   );
 };
@@ -256,7 +271,7 @@ const FieldInstanceForm = ({
 
   return (
     <Form
-      className="border-t py-4"
+      className="border-t p-4 bg-grey-lightest"
       onSubmit={event => {
         event.preventDefault();
         name.focus();
@@ -307,7 +322,7 @@ const FieldInstanceForm = ({
           value={values.description}
         />
         <button
-          className="bg-blue mb-1 hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          className="bg-blue hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           type="submit"
         >
           Create
@@ -337,7 +352,7 @@ const CreateTypeInstanceForm = props => {
         onCompleted={props.toggleCreateOpen}
       >
         {(createTypeInstance, { data }) => (
-          <form
+          <Form
             className="bg-white shadow rounded px-8 pt-6 pb-8 mb-4"
             onSubmit={event => {
               event.preventDefault();
@@ -423,7 +438,7 @@ const CreateTypeInstanceForm = props => {
                 </div>
               </div>
             </div>
-          </form>
+          </Form>
         )}
       </Mutation>
     </div>

@@ -107489,7 +107489,11 @@ function (_PureComponent) {
       createOpen: false
     });
 
-    _defineProperty(_assertThisInitialized(_assertThisInitialized(_this)), "toggleCreateOpen", function () {
+    _defineProperty(_assertThisInitialized(_assertThisInitialized(_this)), "toggleCreateOpen", function (event) {
+      if (typeof event.preventDefault === "function") {
+        event.preventDefault();
+      }
+
       _this.setState({
         createOpen: !_this.state.createOpen
       });
@@ -107555,15 +107559,19 @@ var TypeInstanceList = function TypeInstanceList(props) {
 var TypeInstance = function TypeInstance(props) {
   var instance = props.instance;
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "w-full bg-white shadow rounded px-8 pt-6 pb-8 mb-8"
+    className: "w-full bg-white shadow rounded mb-8"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "p-4"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
-    className: "text-4xl text-grey-dark mb-4"
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("em", null, instance.name)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldInstanceList, props), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(CreateFieldInstanceWrapper, props));
+    className: "text-xl text-grey-dark mb-4"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("em", null, instance.name)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+    className: "text-sm text-grey-dark mb-2 pb-4 border-b"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("em", null, instance.description)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldInstanceList, props)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(CreateFieldInstanceWrapper, props));
 };
 
 var FieldInstanceList = function FieldInstanceList(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("table", {
-    className: "table-auto w-full mb-8"
+    className: "table-auto w-full mb-8 text-sm"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("thead", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("tr", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
     className: "text-left py-4"
   }, "Field type"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
@@ -107586,7 +107594,6 @@ var FieldInstanceList = function FieldInstanceList(props) {
         error = _ref5.error;
     if (loading) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Loading fields\u2026");
     if (error) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Error loading fields!");
-    console.log(data);
     return data.fieldInstancesForTypeInProject.map(function (fieldInstance, index) {
       return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldInstance, {
         fieldInstance: fieldInstance,
@@ -107676,7 +107683,7 @@ var FieldInstanceForm = function FieldInstanceForm(_ref10) {
   var name;
   var machine_name;
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_4__["Form"], {
-    className: "border-t py-4",
+    className: "border-t p-4 bg-grey-lightest",
     onSubmit: function onSubmit(event) {
       event.preventDefault();
       name.focus();
@@ -107727,7 +107734,7 @@ var FieldInstanceForm = function FieldInstanceForm(_ref10) {
     component: _misc_fields__WEBPACK_IMPORTED_MODULE_5__["InlineTextInputField"],
     value: values.description
   }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
-    className: "bg-blue mb-1 hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline",
+    className: "bg-blue hover:bg-blue-dark text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline",
     type: "submit"
   }, "Create")));
 };
@@ -107752,7 +107759,7 @@ var CreateTypeInstanceForm = function CreateTypeInstanceForm(props) {
     onCompleted: props.toggleCreateOpen
   }, function (createTypeInstance, _ref11) {
     var data = _ref11.data;
-    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_4__["Form"], {
       className: "bg-white shadow rounded px-8 pt-6 pb-8 mb-4",
       onSubmit: function onSubmit(event) {
         event.preventDefault();
